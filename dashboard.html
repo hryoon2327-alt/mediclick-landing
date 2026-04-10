@@ -622,6 +622,27 @@
     .rate-label { font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
     .rate-desc { font-size: 10px; color: var(--text-muted); margin-bottom: 8px; }
     .rate-value { font-size: 28px; font-weight: 900; color: var(--brand-navy); }
+
+    /* ========== FILTER & CSV ========== */
+    .form-filter-input {
+      padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px;
+      font-size: 13px; font-family: inherit; color: var(--text-primary);
+      background: var(--bg-white); outline: none; min-width: 140px;
+    }
+    .form-filter-input:focus { border-color: var(--brand-blue); box-shadow: 0 0 0 3px rgba(42,172,226,0.1); }
+    .csv-filter-btn {
+      padding: 8px 18px; border: 1px solid var(--brand-blue); border-radius: 6px;
+      background: var(--brand-blue-light); color: var(--brand-blue); font-size: 13px;
+      font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.15s;
+    }
+    .csv-filter-btn:hover { background: var(--brand-blue); color: #fff; }
+    .csv-dl-btn {
+      padding: 10px 20px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg-white); color: var(--text-primary); font-size: 13px;
+      font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .csv-dl-btn:hover { background: var(--brand-blue); color: #fff; border-color: var(--brand-blue); }
   </style>
 </head>
 <body>
@@ -710,13 +731,14 @@
                 <th>ステータス</th>
                 <th>担当者名</th>
                 <th>医院名</th>
+                <th>診療科目</th>
                 <th>URL</th>
                 <th style="text-align:center;">総合スコア</th>
                 <th style="text-align:center;">操作</th>
               </tr>
             </thead>
             <tbody id="leadTableBody">
-              <tr><td colspan="7" class="table-empty">読み込み中...</td></tr>
+              <tr><td colspan="8" class="table-empty">読み込み中...</td></tr>
             </tbody>
           </table>
         </div>
@@ -724,6 +746,59 @@
 
       <!-- ====== ANALYTICS VIEW ====== -->
       <div class="analytics-view" id="analyticsView" style="display:none;">
+
+        <!-- FILTERS + CSV DOWNLOAD BAR -->
+        <div class="detail-card" style="margin-bottom:20px;">
+          <div class="detail-card-title"><span class="icon">&#128269;</span> フィルター &amp; CSVダウンロード</div>
+          <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+            <div>
+              <div class="info-label">期間（開始）</div>
+              <input type="date" class="form-filter-input" id="csvFrom" />
+            </div>
+            <div>
+              <div class="info-label">期間（終了）</div>
+              <input type="date" class="form-filter-input" id="csvTo" />
+            </div>
+            <div>
+              <div class="info-label">診療科目</div>
+              <select class="form-filter-input" id="csvDept">
+                <option value="">すべて</option>
+                <option value="内科">内科</option>
+                <option value="外科">外科</option>
+                <option value="小児科">小児科</option>
+                <option value="産婦人科">産婦人科</option>
+                <option value="整形外科">整形外科</option>
+                <option value="皮膚科">皮膚科</option>
+                <option value="眼科">眼科</option>
+                <option value="耳鼻咽喉科">耳鼻咽喉科</option>
+                <option value="泌尿器科">泌尿器科</option>
+                <option value="精神科・心療内科">精神科・心療内科</option>
+                <option value="歯科">歯科</option>
+                <option value="矯正歯科">矯正歯科</option>
+                <option value="美容外科・美容皮膚科">美容外科・美容皮膚科</option>
+                <option value="リハビリテーション科">リハビリテーション科</option>
+                <option value="その他">その他</option>
+              </select>
+            </div>
+            <div>
+              <div class="info-label">ステータス</div>
+              <select class="form-filter-input" id="csvStatus">
+                <option value="all">すべて</option>
+                <option value="new">新規</option>
+                <option value="contacted">対応中</option>
+                <option value="contracted">成約</option>
+                <option value="lost">失注</option>
+              </select>
+            </div>
+            <button class="csv-filter-btn" onclick="applyAnalyticsFilter()">&#128270; フィルター適用</button>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+            <button class="csv-dl-btn" onclick="downloadCSV('leads')">&#128196; リード一覧CSV</button>
+            <button class="csv-dl-btn" onclick="downloadCSV('stats')">&#128202; 分析統計CSV</button>
+            <button class="csv-dl-btn" onclick="downloadCSV('scores')">&#127919; 診断スコアCSV</button>
+          </div>
+        </div>
+
         <!-- KPI Cards -->
         <div class="stats-row" style="grid-template-columns:repeat(5,1fr);">
           <div class="stat-card">
@@ -868,6 +943,10 @@
                 <div class="info-item">
                   <div class="info-label">電話番号</div>
                   <div class="info-value" id="detPhone">-</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">診療科目</div>
+                  <div class="info-value" id="detDept">-</div>
                 </div>
                 <div class="info-item info-full">
                   <div class="info-label">診断URL</div>
@@ -1050,7 +1129,7 @@ function renderTable() {
   const filtered = currentFilter === 'all' ? allLeads : allLeads.filter(l => l.status === currentFilter);
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="table-empty">該当するリードがありません</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="table-empty">該当するリードがありません</td></tr>';
     return;
   }
 
@@ -1060,6 +1139,7 @@ function renderTable() {
       <td><span class="status-badge ${statusClass(l.status)}">${statusLabel(l.status)}</span></td>
       <td style="font-weight:600;">${esc(l.name)}</td>
       <td>${esc(l.clinicName || '-')}</td>
+      <td style="font-size:12px;">${esc(l.department || '-')}</td>
       <td class="table-url" title="${esc(l.url)}">${esc(truncate(l.url, 30))}</td>
       <td style="text-align:center;">
         ${l.totalScore !== null
@@ -1134,6 +1214,7 @@ function renderDetail(lead) {
   document.getElementById('detPhone').innerHTML = lead.phone
     ? `<a href="tel:${esc(lead.phone)}" style="color:var(--brand-blue);text-decoration:none;">${esc(lead.phone)}</a>`
     : '-';
+  document.getElementById('detDept').textContent = lead.department || '（未選択）';
   document.getElementById('detUrl').innerHTML = lead.url
     ? `<a href="${esc(lead.url)}" target="_blank" style="color:var(--brand-blue);text-decoration:none;word-break:break-all;">${esc(lead.url)}</a>`
     : '-';
@@ -1605,6 +1686,44 @@ async function reAnalyze() {
   if (btn) { btn.disabled = false; btn.textContent = '\u{1F50D} 再分析を実行'; }
 }
 
+/* ── CSV DOWNLOAD ────────────────────────────────────────────── */
+function getCsvQueryString() {
+  const from = document.getElementById('csvFrom').value;
+  const to   = document.getElementById('csvTo').value;
+  const dept = document.getElementById('csvDept').value;
+  const status = document.getElementById('csvStatus').value;
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to)   params.set('to', to);
+  if (dept) params.set('department', dept);
+  if (status && status !== 'all') params.set('status', status);
+  const qs = params.toString();
+  return qs ? '?' + qs : '';
+}
+
+function downloadCSV(type) {
+  const qs = getCsvQueryString();
+  window.open(`/api/csv/${type}${qs}`, '_blank');
+}
+
+function applyAnalyticsFilter() {
+  // Re-fetch leads with filter applied and re-render analytics
+  const from = document.getElementById('csvFrom').value;
+  const to   = document.getElementById('csvTo').value;
+  const dept = document.getElementById('csvDept').value;
+  const status = document.getElementById('csvStatus').value;
+
+  // Filter the local allLeads data
+  let filtered = [...allLeads];
+  if (from) filtered = filtered.filter(l => l.createdAt >= from);
+  if (to)   filtered = filtered.filter(l => l.createdAt <= to + 'T23:59:59.999Z');
+  if (dept) filtered = filtered.filter(l => l.department === dept);
+  if (status && status !== 'all') filtered = filtered.filter(l => l.status === status);
+
+  renderAnalyticsWithData(filtered);
+  showToast(`フィルター適用: ${filtered.length}件`);
+}
+
 /* ── ANALYTICS CHARTS (stored references) ────────────────────── */
 let analyticsCharts = { time: null, status: null, scoreDist: null, avg: null };
 
@@ -1616,7 +1735,10 @@ function destroyAnalyticsCharts() {
 
 /* ── RENDER ANALYTICS ────────────────────────────────────────── */
 function renderAnalytics() {
-  const leads = allLeads;
+  renderAnalyticsWithData(allLeads);
+}
+
+function renderAnalyticsWithData(leads) {
   const total = leads.length;
   const newCount = leads.filter(l => l.status === 'new').length;
   const contactedCount = leads.filter(l => l.status === 'contacted').length;

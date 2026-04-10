@@ -595,7 +595,7 @@ function writeLeads(leads) {
 
 /* POST /api/leads — save consultation request + analysis data */
 app.post('/api/leads', (req, res) => {
-  const { name, clinicName, email, phone, message, url, scores, findings } = req.body;
+  const { name, clinicName, email, phone, message, department, url, scores, findings } = req.body;
   if (!name || !email) return res.status(400).json({ error: 'name and email required' });
 
   const lead = {
@@ -606,6 +606,7 @@ app.post('/api/leads', (req, res) => {
     clinicName: clinicName || '',
     email,
     phone:      phone || '',
+    department: department || '',
     message:    message || '',
     url:        url || '',
     scores:     scores || null,
@@ -627,7 +628,7 @@ app.get('/api/leads', (req, res) => {
   const summary = leads.map(l => ({
     id: l.id, createdAt: l.createdAt, status: l.status,
     name: l.name, clinicName: l.clinicName, email: l.email,
-    phone: l.phone, url: l.url,
+    phone: l.phone, department: l.department || '', url: l.url,
     scores: l.scores || null,
     totalScore: l.scores ? Math.round((l.scores.uiux + l.scores.usability + l.scores.ia + l.scores.cta + l.scores.mobile) / 5) : null,
   }));
@@ -662,6 +663,112 @@ app.delete('/api/leads/:id', (req, res) => {
   leads = leads.filter(l => l.id !== req.params.id);
   writeLeads(leads);
   res.json({ ok: true });
+});
+
+/* ════════════════════════════════════════════════════════════════
+   CSV DOWNLOAD ENDPOINTS
+════════════════════════════════════════════════════════════════ */
+
+function csvEscape(val) {
+  if (val === null || val === undefined) return '';
+  const s = String(val);
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function filterLeadsByQuery(leads, query) {
+  let filtered = [...leads];
+  const { from, to, department, status } = query;
+  if (from) filtered = filtered.filter(l => l.createdAt >= from);
+  if (to)   filtered = filtered.filter(l => l.createdAt <= to + 'T23:59:59.999Z');
+  if (department) filtered = filtered.filter(l => l.department === department);
+  if (status && status !== 'all') filtered = filtered.filter(l => l.status === status);
+  return filtered;
+}
+
+/* GET /api/csv/leads — リード一覧CSV */
+app.get('/api/csv/leads', (req, res) => {
+  const leads = filterLeadsByQuery(readLeads(), req.query);
+  const header = '登録日時,ステータス,担当者名,医院名,診療科目,メールアドレス,電話番号,診断URL,総合スコア,メッセージ';
+  const statusMap = { new:'新規', contacted:'対応中', contracted:'成約', lost:'失注' };
+  const rows = leads.map(l => {
+    const total = l.scores ? Math.round((l.scores.uiux + l.scores.usability + l.scores.ia + l.scores.cta + l.scores.mobile) / 5) : '';
+    return [
+      l.createdAt, statusMap[l.status] || l.status, l.name, l.clinicName,
+      l.department || '', l.email, l.phone, l.url, total, l.message,
+    ].map(csvEscape).join(',');
+  });
+  const bom = '\uFEFF';
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="leads.csv"');
+  res.send(bom + header + '\n' + rows.join('\n'));
+});
+
+/* GET /api/csv/stats — 分析統計CSV */
+app.get('/api/csv/stats', (req, res) => {
+  const leads = filterLeadsByQuery(readLeads(), req.query);
+  const total = leads.length;
+  const newC = leads.filter(l => l.status === 'new').length;
+  const contacted = leads.filter(l => l.status === 'contacted').length;
+  const contracted = leads.filter(l => l.status === 'contracted').length;
+  const lost = leads.filter(l => l.status === 'lost').length;
+  const decided = contracted + lost;
+  const responded = contacted + contracted + lost;
+  const pct = (n, d) => d > 0 ? (n / d * 100).toFixed(1) + '%' : '0%';
+
+  const header = '指標,値';
+  const rows = [
+    ['総リード数', total],
+    ['新規（未対応）', newC],
+    ['対応中', contacted],
+    ['成約', contracted],
+    ['失注', lost],
+    ['対応率', pct(responded, total)],
+    ['成約率（全体）', pct(contracted, total)],
+    ['成約率（確定分）', pct(contracted, decided)],
+    ['失注率（確定分）', pct(lost, decided)],
+  ].map(r => r.map(csvEscape).join(','));
+
+  // Department breakdown
+  const deptMap = {};
+  leads.forEach(l => {
+    const d = l.department || '未設定';
+    if (!deptMap[d]) deptMap[d] = { total: 0, contracted: 0 };
+    deptMap[d].total++;
+    if (l.status === 'contracted') deptMap[d].contracted++;
+  });
+  rows.push('');
+  rows.push('診療科目,リード数,成約数,成約率');
+  Object.entries(deptMap).sort((a,b) => b[1].total - a[1].total).forEach(([dept, v]) => {
+    rows.push([dept, v.total, v.contracted, pct(v.contracted, v.total)].map(csvEscape).join(','));
+  });
+
+  const bom = '\uFEFF';
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="stats.csv"');
+  res.send(bom + header + '\n' + rows.join('\n'));
+});
+
+/* GET /api/csv/scores — 診断スコア詳細CSV */
+app.get('/api/csv/scores', (req, res) => {
+  const leads = filterLeadsByQuery(readLeads(), req.query).filter(l => l.scores);
+  const header = '登録日時,医院名,診療科目,URL,総合スコア,UI/UX,ユーザビリティ,情報設計,集患導線,モバイル対応,ステータス';
+  const statusMap = { new:'新規', contacted:'対応中', contracted:'成約', lost:'失注' };
+  const rows = leads.map(l => {
+    const s = l.scores;
+    const total = Math.round((s.uiux + s.usability + s.ia + s.cta + s.mobile) / 5);
+    return [
+      l.createdAt, l.clinicName, l.department || '', l.url,
+      total, s.uiux, s.usability, s.ia, s.cta, s.mobile,
+      statusMap[l.status] || l.status,
+    ].map(csvEscape).join(',');
+  });
+  const bom = '\uFEFF';
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="scores.csv"');
+  res.send(bom + header + '\n' + rows.join('\n'));
 });
 
 /* POST /api/analyze-only — run analysis without saving lead (for dashboard re-analyze) */

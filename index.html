@@ -1297,11 +1297,36 @@
             <input type="text" class="form-input" name="clinicName" placeholder="○○クリニック" required />
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">
-            メールアドレス <span class="form-required">必須</span>
-          </label>
-          <input type="email" class="form-input" name="email" placeholder="info@clinic.com" required />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">
+              メールアドレス <span class="form-required">必須</span>
+            </label>
+            <input type="email" class="form-input" name="email" placeholder="info@clinic.com" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              診療科目 <span class="form-optional">任意</span>
+            </label>
+            <select class="form-select" name="department">
+              <option value="">選択してください</option>
+              <option value="内科">内科</option>
+              <option value="外科">外科</option>
+              <option value="小児科">小児科</option>
+              <option value="産婦人科">産婦人科</option>
+              <option value="整形外科">整形外科</option>
+              <option value="皮膚科">皮膚科</option>
+              <option value="眼科">眼科</option>
+              <option value="耳鼻咽喉科">耳鼻咽喉科</option>
+              <option value="泌尿器科">泌尿器科</option>
+              <option value="精神科・心療内科">精神科・心療内科</option>
+              <option value="歯科">歯科</option>
+              <option value="矯正歯科">矯正歯科</option>
+              <option value="美容外科・美容皮膚科">美容外科・美容皮膚科</option>
+              <option value="リハビリテーション科">リハビリテーション科</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">
@@ -1760,6 +1785,7 @@ function scrollToForm() {
       email:      fd.get('email'),
       phone:      fd.get('phone'),
       message:    fd.get('message'),
+      department: fd.get('department'),
       url:        document.getElementById('urlInput').value.trim() || '',
       scores:     lastAnalysis ? null : null,
       findings:   lastAnalysis || null,
