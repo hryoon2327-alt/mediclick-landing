@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>リード管理ダッシュボード | Mediclick</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand-blue: #2AACE2;
+      --brand-blue-dark: #1a8bbf;
+      --brand-blue-light: #e8f6fd;
+      --brand-navy: #1a3a5c;
+      --text-primary: #1a2a3a;
+      --text-secondary: #4a5a6a;
+      --text-muted: #7a8a9a;
+      --bg-white: #ffffff;
+      --bg-light: #f4f8fb;
+      --bg-section: #f0f6fa;
+      --border: #d0e4f0;
+      --red: #e85252;
+      --yellow: #f5a623;
+      --green: #2ecc71;
+      --shadow-sm: 0 2px 8px rgba(42,172,226,0.08);
+      --shadow-md: 0 4px 20px rgba(42,172,226,0.12);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --sidebar-w: 240px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      color: var(--text-primary);
+      background: var(--bg-light);
+      line-height: 1.6;
+      font-size: 14px;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ========== SIDEBAR ========== */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--brand-navy);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 24px 24px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-logo-text {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--brand-blue);
+      letter-spacing: -0.3px;
+    }
+    .sidebar-logo-sub {
+      font-size: 10px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 2px;
+      letter-spacing: 0.5px;
+    }
+    .sidebar-nav { padding: 16px 12px; flex: 1; }
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 12px 12px 8px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.65);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      margin-bottom: 2px;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .nav-item.active { background: rgba(42,172,226,0.2); color: var(--brand-blue); font-weight: 700; }
+    .nav-icon { width: 18px; text-align: center; font-size: 15px; flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto;
+      background: var(--brand-blue);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      min-width: 20px;
+      text-align: center;
+    }
+    .sidebar-footer {
+      padding: 16px 24px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* ========== MAIN CONTENT ========== */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .topbar {
+      background: var(--bg-white);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--brand-navy);
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar-refresh {
+      background: var(--bg-light);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .topbar-refresh:hover { background: var(--brand-blue-light); color: var(--brand-blue); border-color: var(--brand-blue); }
+    .content { flex: 1; padding: 24px 32px; }
+
+    /* ========== STATUS BADGES ========== */
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .status-new { background: #e0f0ff; color: #1a7fd4; }
+    .status-contacted { background: #fff5dc; color: #b38600; }
+    .status-contracted { background: #e0f8ed; color: #1a9955; }
+    .status-lost { background: #eee; color: #888; }
+
+    /* ========== STATS ROW ========== */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--bg-white);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+    }
+    .stat-label { font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.3px; }
+    .stat-value { font-size: 28px; font-weight: 900; color: var(--brand-navy); }
+    .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ========== FILTER TABS ========== */
+    .filter-tabs {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      margin-bottom: 20px;
+      background: var(--bg-white);
+      width: fit-content;
+    }
+    .filter-tab {
+      padding: 9px 18px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      transition: all 0.15s;
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .filter-tab:last-child { border-right: none; }
+    .filter-tab:hover { background: var(--bg-light); color: var(--text-primary); }
+    .filter-tab.active { background: var(--brand-blue); color: #fff; }
+
+    /* ========== LEAD TABLE ========== */
+    .table-card {
+      background: var(--bg-white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .lead-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .lead-table thead th {
+      background: var(--bg-light);
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-align: left;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .lead-table tbody tr {
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .lead-table tbody tr:hover { background: var(--brand-blue-light); }
+    .lead-table tbody td {
+      padding: 12px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid #eef4f8;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .table-url {
+      color: var(--brand-blue);
+      font-size: 12px;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .table-score {
+      font-weight: 900;
+      font-size: 15px;
+    }
+    .table-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* ========== DETAIL VIEW ========== */
+    .detail-view { display: none; }
+    .detail-view.active { display: block; }
+    .list-view.active { display: block; }
+    .list-view { display: none; }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: inherit;
+      margin-bottom: 20px;
+      transition: all 0.15s;
+    }
+    .back-btn:hover { background: var(--bg-white); color: var(--brand-blue); border-color: var(--brand-blue); }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+    }
+
+    .detail-card {
+      background: var(--bg-white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .detail-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--brand-navy);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .detail-card-title .icon { font-size: 16px; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .info-item {}
+    .info-label { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 4px; }
+    .info-value { font-size: 14px; color: var(--text-primary); word-break: break-word; }
+    .info-full { grid-column: 1 / -1; }
+    .info-message {
+      background: var(--bg-light);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      white-space: pre-wrap;
+      border: 1px solid var(--border);
+    }
+
+    /* ========== SIDEBAR ACTIONS ========== */
+    .action-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--bg-white);
+      cursor: pointer;
+      outline: none;
+      margin-bottom: 10px;
+    }
+    .action-select:focus { border-color: var(--brand-blue); box-shadow: 0 0 0 3px rgba(42,172,226,0.1); }
+    .action-btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 8px;
+    }
+    .btn-primary { background: var(--brand-blue); color: #fff; }
+    .btn-primary:hover { background: var(--brand-blue-dark); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .btn-outline:hover { background: var(--bg-light); border-color: var(--brand-blue); color: var(--brand-blue); }
+    .btn-danger { background: transparent; border: 1px solid #fdd; color: var(--red); }
+    .btn-danger:hover { background: #fff5f5; }
+
+    .notes-area {
+      width: 100%;
+      min-height: 100px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text-primary);
+      resize: vertical;
+      outline: none;
+      line-height: 1.7;
+      margin-bottom: 10px;
+    }
+    .notes-area:focus { border-color: var(--brand-blue); box-shadow: 0 0 0 3px rgba(42,172,226,0.1); }
+
+    /* ========== ANALYSIS SECTION ========== */
+    .score-overview {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 32px;
+      align-items: center;
+    }
+    .total-score-wrap { text-align: center; min-width: 150px; }
+    .total-score-ring {
+      width: 140px; height: 140px; border-radius: 50%;
+      background: conic-gradient(var(--brand-blue) 0%, var(--brand-blue-light) 0%);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+    }
+    .total-score-inner {
+      width: 114px; height: 114px; border-radius: 50%; background: #fff;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .total-score-num { font-size: 40px; font-weight: 900; line-height: 1; }
+    .total-score-label { font-size: 10px; color: var(--text-muted); font-weight: 700; }
+    .total-score-grade { font-size: 13px; font-weight: 700; margin-top: 6px; }
+
+    .score-bars { display: flex; flex-direction: column; gap: 14px; }
+    .score-bar-item {}
+    .score-bar-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .score-bar-name { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+    .score-bar-val { font-size: 12px; font-weight: 700; }
+    .score-bar-track { height: 7px; background: var(--bg-light); border-radius: 4px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .chart-card {
+      background: var(--bg-white);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+    }
+    .chart-card-title { font-size: 13px; font-weight: 700; color: var(--brand-navy); margin-bottom: 16px; }
+    .chart-wrap { height: 220px; position: relative; }
+
+    /* ========== FINDINGS CARD ========== */
+    .findings-card {
+      background: var(--bg-white);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--brand-blue);
+      margin-bottom: 20px;
+    }
+    .findings-card-title {
+      font-size: 13px; font-weight: 700; color: var(--brand-navy);
+      margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .findings-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px;
+    }
+    .finding-item {
+      background: var(--bg-light); border-radius: 6px; padding: 10px 12px;
+      border: 1px solid var(--border);
+    }
+    .finding-label {
+      font-size: 9px; font-weight: 700; color: var(--text-muted);
+      margin-bottom: 3px; letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .finding-value { font-size: 11px; color: var(--text-primary); word-break: break-all; line-height: 1.5; }
+    .finding-ok { color: var(--green) !important; font-weight: 700; }
+    .finding-warn { color: var(--yellow) !important; font-weight: 700; }
+    .finding-bad { color: var(--red) !important; font-weight: 700; }
+
+    /* ========== DIAGNOSIS TABS ========== */
+    .diagnosis-tabs {
+      display: flex; gap: 0;
+      border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden;
+      margin-bottom: 20px; background: var(--bg-white);
+    }
+    .diagnosis-tab {
+      flex: 1; padding: 11px 6px; text-align: center; font-size: 12px; font-weight: 700;
+      cursor: pointer; border: none; background: #fff; color: var(--text-muted);
+      font-family: inherit; border-right: 1px solid var(--border); transition: all 0.15s;
+    }
+    .diagnosis-tab:last-child { border-right: none; }
+    .diagnosis-tab:hover { background: var(--bg-light); }
+    .diagnosis-tab.active { background: var(--brand-blue); color: #fff; }
+    .diagnosis-panel { display: none; animation: fadeIn 0.3s ease; }
+    .diagnosis-panel.active { display: block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+    .diag-card {
+      border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px;
+      background: var(--bg-white);
+    }
+    .diag-card-head {
+      display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+      background: var(--bg-light); border-bottom: 1px solid var(--border);
+    }
+    .diag-badge { padding: 3px 10px; border-radius: 100px; font-size: 10px; font-weight: 700; }
+    .badge-red { background: #ffeaea; color: var(--red); }
+    .badge-yellow { background: #fff8e8; color: var(--yellow); }
+    .badge-green { background: #eafaf3; color: var(--green); }
+    .diag-card-title { font-size: 14px; font-weight: 700; color: var(--text-primary); flex: 1; }
+    .diag-card-score { font-size: 18px; font-weight: 900; }
+    .diag-card-body { padding: 20px; }
+    .diag-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .diag-col {}
+    .diag-col-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 4px; display: inline-block; width: fit-content;
+      margin-bottom: 6px;
+    }
+    .label-current { background: #f0f0f0; color: #666; }
+    .label-problem { background: #ffeaea; color: var(--red); }
+    .label-improve { background: #e8f6fd; color: var(--brand-blue); }
+    .diag-col-text { font-size: 12px; color: var(--text-secondary); line-height: 1.8; }
+
+    .detected-data {
+      background: var(--bg-light); border-radius: 6px; padding: 14px;
+      margin-bottom: 16px; border: 1px solid var(--border);
+    }
+    .detected-data-title {
+      font-size: 10px; font-weight: 700; color: var(--brand-blue);
+      letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .detected-row {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 12px; margin-bottom: 5px; line-height: 1.5;
+    }
+    .detected-key { color: var(--text-muted); white-space: nowrap; min-width: 130px; flex-shrink: 0; }
+    .detected-val { color: var(--text-primary); word-break: break-word; }
+    .detected-val.ok { color: var(--green); font-weight: 700; }
+    .detected-val.warn { color: var(--yellow); font-weight: 700; }
+    .detected-val.bad { color: var(--red); font-weight: 700; }
+
+    /* ========== TOAST ========== */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--brand-navy);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      z-index: 9999;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ========== LOADING SPINNER ========== */
+    .spinner-inline {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--brand-blue);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(255,255,255,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .loading-overlay.active { display: flex; }
+    .loading-overlay .spinner-lg {
+      width: 48px; height: 48px;
+      border: 4px solid var(--brand-blue-light);
+      border-top-color: var(--brand-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .loading-overlay .loading-text {
+      font-size: 14px; font-weight: 700; color: var(--brand-navy);
+    }
+
+    /* ========== NO DATA PLACEHOLDER ========== */
+    .no-analysis {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .no-analysis-icon { font-size: 40px; margin-bottom: 12px; }
+    .no-analysis-text { font-size: 14px; margin-bottom: 16px; }
+
+    /* ========== ANALYTICS VIEW ========== */
+    .analytics-view { animation: fadeIn 0.3s ease; }
+
+    .funnel-wrap { display: flex; flex-direction: column; gap: 14px; }
+    .funnel-row { display: flex; align-items: center; gap: 16px; }
+    .funnel-bar {
+      height: 32px; border-radius: 6px; min-width: 24px;
+      transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    }
+    .funnel-info { display: flex; flex-direction: column; min-width: 0; }
+    .funnel-label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .funnel-val { font-size: 20px; font-weight: 900; color: var(--brand-navy); }
+
+    .rate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .rate-card {
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 16px; text-align: center;
+    }
+    .rate-label { font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+    .rate-desc { font-size: 10px; color: var(--text-muted); margin-bottom: 8px; }
+    .rate-value { font-size: 28px; font-weight: 900; color: var(--brand-navy); }
+  </style>
+</head>
+<body>
+  <!-- ====== SIDEBAR ====== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-text">Mediclick</div>
+      <div class="sidebar-logo-sub">MARKETING DASHBOARD</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">MANAGEMENT</div>
+      <div class="nav-item active" id="navLeads" onclick="showListView()">
+        <span class="nav-icon">&#128203;</span>
+        <span>リード一覧</span>
+        <span class="nav-badge" id="navLeadCount">0</span>
+      </div>
+      <div class="nav-item" id="navAnalytics" onclick="showAnalyticsView()">
+        <span class="nav-icon">&#128202;</span>
+        <span>分析・統計</span>
+      </div>
+      <div class="nav-item" onclick="window.open('/', '_blank')">
+        <span class="nav-icon">&#127760;</span>
+        <span>公開ページ</span>
+      </div>
+      <div class="nav-section-label">INFO</div>
+      <div class="nav-item" style="cursor:default; opacity:0.5;">
+        <span class="nav-icon">&#128336;</span>
+        <span id="lastUpdated">未読み込み</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      &copy; 2026 Mediclick Inc.
+    </div>
+  </aside>
+
+  <!-- ====== MAIN ====== -->
+  <main class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">リード管理</div>
+      <div class="topbar-right">
+        <button class="topbar-refresh" onclick="loadLeads()">
+          &#8635; 更新
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- ====== LIST VIEW ====== -->
+      <div class="list-view active" id="listView">
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">総リード数</div>
+            <div class="stat-value" id="statTotal">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">新規（未対応）</div>
+            <div class="stat-value" id="statNew" style="color: #1a7fd4;">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">対応中</div>
+            <div class="stat-value" id="statContacted" style="color: #b38600;">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">成約</div>
+            <div class="stat-value" id="statContracted" style="color: var(--green);">0</div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="filterLeads('all', this)">すべて</button>
+          <button class="filter-tab" onclick="filterLeads('new', this)">新規</button>
+          <button class="filter-tab" onclick="filterLeads('contacted', this)">対応中</button>
+          <button class="filter-tab" onclick="filterLeads('contracted', this)">成約</button>
+          <button class="filter-tab" onclick="filterLeads('lost', this)">失注</button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-card">
+          <table class="lead-table">
+            <thead>
+              <tr>
+                <th>日時</th>
+                <th>ステータス</th>
+                <th>担当者名</th>
+                <th>医院名</th>
+                <th>URL</th>
+                <th style="text-align:center;">総合スコア</th>
+                <th style="text-align:center;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="leadTableBody">
+              <tr><td colspan="7" class="table-empty">読み込み中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ====== ANALYTICS VIEW ====== -->
+      <div class="analytics-view" id="analyticsView" style="display:none;">
+        <!-- KPI Cards -->
+        <div class="stats-row" style="grid-template-columns:repeat(5,1fr);">
+          <div class="stat-card">
+            <div class="stat-label">総リード数</div>
+            <div class="stat-value" id="aTotal">0</div>
+            <div class="stat-sub" id="aTotalSub">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">新規（未対応）</div>
+            <div class="stat-value" id="aNew" style="color:#1a7fd4;">0</div>
+            <div class="stat-sub" id="aNewSub">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">対応中</div>
+            <div class="stat-value" id="aContacted" style="color:#b38600;">0</div>
+            <div class="stat-sub" id="aContactedSub">-</div>
+          </div>
+          <div class="stat-card" style="border: 2px solid var(--green);">
+            <div class="stat-label">成約</div>
+            <div class="stat-value" id="aContracted" style="color:var(--green);">0</div>
+            <div class="stat-sub" id="aContractedSub">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">失注</div>
+            <div class="stat-value" id="aLost" style="color:#888;">0</div>
+            <div class="stat-sub" id="aLostSub">-</div>
+          </div>
+        </div>
+
+        <!-- Conversion Funnel + Rates -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+          <div class="detail-card">
+            <div class="detail-card-title"><span class="icon">&#127919;</span> コンバージョンファネル</div>
+            <div class="funnel-wrap">
+              <div class="funnel-row" id="funnelTotal">
+                <div class="funnel-bar" style="width:100%; background:var(--brand-blue);"></div>
+                <div class="funnel-info"><span class="funnel-label">全リード</span><span class="funnel-val" id="funnelTotalVal">0</span></div>
+              </div>
+              <div class="funnel-row" id="funnelContacted">
+                <div class="funnel-bar" style="width:70%; background:var(--yellow);"></div>
+                <div class="funnel-info"><span class="funnel-label">対応済み（対応中+成約+失注）</span><span class="funnel-val" id="funnelContactedVal">0</span></div>
+              </div>
+              <div class="funnel-row" id="funnelDecided">
+                <div class="funnel-bar" style="width:40%; background:#e67e22;"></div>
+                <div class="funnel-info"><span class="funnel-label">結果確定（成約+失注）</span><span class="funnel-val" id="funnelDecidedVal">0</span></div>
+              </div>
+              <div class="funnel-row" id="funnelWon">
+                <div class="funnel-bar" style="width:20%; background:var(--green);"></div>
+                <div class="funnel-info"><span class="funnel-label">成約</span><span class="funnel-val" id="funnelWonVal">0</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <div class="detail-card-title"><span class="icon">&#128200;</span> 転換率</div>
+            <div class="rate-grid">
+              <div class="rate-card">
+                <div class="rate-label">対応率</div>
+                <div class="rate-desc">全リード → 対応済み</div>
+                <div class="rate-value" id="rateContact">-</div>
+              </div>
+              <div class="rate-card" style="border-color:var(--green);">
+                <div class="rate-label" style="color:var(--green);">成約率（全体）</div>
+                <div class="rate-desc">全リード → 成約</div>
+                <div class="rate-value" id="rateWinAll" style="color:var(--green);">-</div>
+              </div>
+              <div class="rate-card" style="border-color:var(--brand-blue);">
+                <div class="rate-label" style="color:var(--brand-blue);">成約率（確定分）</div>
+                <div class="rate-desc">成約 / (成約+失注)</div>
+                <div class="rate-value" id="rateWinDecided" style="color:var(--brand-blue);">-</div>
+              </div>
+              <div class="rate-card">
+                <div class="rate-label" style="color:var(--red);">失注率（確定分）</div>
+                <div class="rate-desc">失注 / (成約+失注)</div>
+                <div class="rate-value" id="rateLostDecided" style="color:var(--red);">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+          <div class="detail-card">
+            <div class="detail-card-title"><span class="icon">&#128197;</span> 日別リード推移</div>
+            <div style="height:260px; position:relative;"><canvas id="analyticsTimeChart"></canvas></div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-card-title"><span class="icon">&#128203;</span> ステータス分布</div>
+            <div style="height:260px; position:relative;"><canvas id="analyticsStatusChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Score Distribution + Avg Scores -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+          <div class="detail-card">
+            <div class="detail-card-title"><span class="icon">&#128200;</span> スコア分布</div>
+            <div style="height:260px; position:relative;"><canvas id="analyticsScoreDistChart"></canvas></div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-card-title"><span class="icon">&#128202;</span> カテゴリ別平均スコア</div>
+            <div style="height:260px; position:relative;"><canvas id="analyticsAvgChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Recent Leads Table -->
+        <div class="detail-card">
+          <div class="detail-card-title"><span class="icon">&#128337;</span> 最近のリード（直近10件）</div>
+          <table class="lead-table" style="margin:-24px;margin-top:0;width:calc(100% + 48px);">
+            <thead>
+              <tr><th>日時</th><th>ステータス</th><th>担当者名</th><th>医院名</th><th>総合スコア</th></tr>
+            </thead>
+            <tbody id="analyticsRecentBody">
+              <tr><td colspan="5" class="table-empty">データなし</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ====== DETAIL VIEW ====== -->
+      <div class="detail-view" id="detailView">
+        <button class="back-btn" onclick="showListView()">&#8592; リード一覧に戻る</button>
+
+        <div class="detail-grid">
+          <!-- LEFT: Info + Analysis -->
+          <div class="detail-left">
+            <!-- Contact Info -->
+            <div class="detail-card">
+              <div class="detail-card-title"><span class="icon">&#128100;</span> 連絡先情報</div>
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-label">担当者名</div>
+                  <div class="info-value" id="detName">-</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">医院名</div>
+                  <div class="info-value" id="detClinic">-</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">メールアドレス</div>
+                  <div class="info-value" id="detEmail">-</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">電話番号</div>
+                  <div class="info-value" id="detPhone">-</div>
+                </div>
+                <div class="info-item info-full">
+                  <div class="info-label">診断URL</div>
+                  <div class="info-value" id="detUrl">-</div>
+                </div>
+                <div class="info-item info-full">
+                  <div class="info-label">メッセージ</div>
+                  <div class="info-message" id="detMessage">-</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Analysis Section -->
+            <div id="analysisSection">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- RIGHT: Actions sidebar -->
+          <div class="detail-right">
+            <!-- Status -->
+            <div class="detail-card">
+              <div class="detail-card-title"><span class="icon">&#127991;</span> ステータス</div>
+              <select class="action-select" id="detStatusSelect">
+                <option value="new">新規</option>
+                <option value="contacted">対応中</option>
+                <option value="contracted">成約</option>
+                <option value="lost">失注</option>
+              </select>
+              <button class="action-btn btn-primary" onclick="saveStatus()">ステータスを保存</button>
+            </div>
+
+            <!-- Notes -->
+            <div class="detail-card">
+              <div class="detail-card-title"><span class="icon">&#128221;</span> 内部メモ</div>
+              <textarea class="notes-area" id="detNotes" placeholder="営業メモ、進捗、メール内容等を記録..."></textarea>
+              <button class="action-btn btn-primary" onclick="saveNotes()">メモを保存</button>
+            </div>
+
+            <!-- Actions -->
+            <div class="detail-card">
+              <div class="detail-card-title"><span class="icon">&#9881;</span> アクション</div>
+              <button class="action-btn btn-outline" onclick="reAnalyze()" id="btnReanalyze">&#128269; 再分析を実行</button>
+              <button class="action-btn btn-danger" onclick="deleteLead()">&#128465; このリードを削除</button>
+              <div style="margin-top:10px;">
+                <div class="info-label">登録日時</div>
+                <div class="info-value" id="detCreatedAt" style="font-size:12px;">-</div>
+              </div>
+              <div style="margin-top:8px;">
+                <div class="info-label">リードID</div>
+                <div class="info-value" id="detId" style="font-size:10px; color:var(--text-muted); font-family:monospace;">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- LOADING OVERLAY -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner-lg"></div>
+    <div class="loading-text" id="loadingMessage">データを読み込み中...</div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   Mediclick Dashboard – Lead Management
+   ================================================================ */
+
+let allLeads = [];
+let currentFilter = 'all';
+let currentLeadId = null;
+let currentLead = null;
+let radarChart = null;
+let barChart = null;
+
+/* ── INIT ─────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  loadLeads();
+});
+
+/* ── API HELPERS ──────────────────────────────────────────────── */
+async function api(url, opts = {}) {
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  return res.json();
+}
+
+/* ── TOAST ─────────────────────────────────────────────────────── */
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+/* ── LOADING ──────────────────────────────────────────────────── */
+function showLoading(msg) {
+  document.getElementById('loadingMessage').textContent = msg || 'データを読み込み中...';
+  document.getElementById('loadingOverlay').classList.add('active');
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+/* ── UTILITY ──────────────────────────────────────────────────── */
+function truncate(s, n) {
+  if (!s) return '';
+  return s.length > n ? s.slice(0, n) + '...' : s;
+}
+
+function formatDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function getColor(score) {
+  if (score >= 70) return '#2ecc71';
+  if (score >= 45) return '#f5a623';
+  return '#e85252';
+}
+
+function getGrade(total) {
+  if (total >= 80) return { text: 'A  -  優秀', color: '#2ecc71' };
+  if (total >= 60) return { text: 'B  -  良好', color: '#27ae60' };
+  if (total >= 45) return { text: 'C  -  改善余地あり', color: '#f5a623' };
+  if (total >= 30) return { text: 'D  -  要改善', color: '#e67e22' };
+  return { text: 'E  -  要大幅改善', color: '#e85252' };
+}
+
+function statusLabel(s) {
+  const m = { new:'新規', contacted:'対応中', contracted:'成約', lost:'失注' };
+  return m[s] || s;
+}
+
+function statusClass(s) {
+  return 'status-' + (s || 'new');
+}
+
+/* ── LOAD LEADS ───────────────────────────────────────────────── */
+async function loadLeads() {
+  try {
+    allLeads = await api('/api/leads');
+  } catch (e) {
+    allLeads = [];
+    showToast('リードの読み込みに失敗しました');
+  }
+  updateStats();
+  renderTable();
+  document.getElementById('navLeadCount').textContent = allLeads.length;
+  document.getElementById('lastUpdated').textContent =
+    new Date().toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' }) + ' 更新';
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = allLeads.length;
+  document.getElementById('statNew').textContent = allLeads.filter(l => l.status === 'new').length;
+  document.getElementById('statContacted').textContent = allLeads.filter(l => l.status === 'contacted').length;
+  document.getElementById('statContracted').textContent = allLeads.filter(l => l.status === 'contracted').length;
+}
+
+/* ── FILTER ────────────────────────────────────────────────────── */
+function filterLeads(status, btn) {
+  currentFilter = status;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderTable();
+}
+
+/* ── RENDER TABLE ─────────────────────────────────────────────── */
+function renderTable() {
+  const tbody = document.getElementById('leadTableBody');
+  const filtered = currentFilter === 'all' ? allLeads : allLeads.filter(l => l.status === currentFilter);
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="table-empty">該当するリードがありません</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(l => `
+    <tr onclick="openDetail('${l.id}')">
+      <td style="font-size:12px; color:var(--text-muted); white-space:nowrap;">${formatDate(l.createdAt)}</td>
+      <td><span class="status-badge ${statusClass(l.status)}">${statusLabel(l.status)}</span></td>
+      <td style="font-weight:600;">${esc(l.name)}</td>
+      <td>${esc(l.clinicName || '-')}</td>
+      <td class="table-url" title="${esc(l.url)}">${esc(truncate(l.url, 30))}</td>
+      <td style="text-align:center;">
+        ${l.totalScore !== null
+          ? `<span class="table-score" style="color:${getColor(l.totalScore)}">${l.totalScore}</span>`
+          : '<span style="color:var(--text-muted);">-</span>'}
+      </td>
+      <td style="text-align:center;">
+        <button style="background:var(--brand-blue-light);color:var(--brand-blue);border:none;padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="event.stopPropagation();openDetail('${l.id}')">詳細</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function esc(s) {
+  if (!s) return '';
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ── VIEW SWITCHING ───────────────────────────────────────────── */
+function hideAllViews() {
+  document.getElementById('listView').className = 'list-view';
+  document.getElementById('detailView').className = 'detail-view';
+  document.getElementById('analyticsView').style.display = 'none';
+  document.getElementById('navLeads').classList.remove('active');
+  document.getElementById('navAnalytics').classList.remove('active');
+}
+
+function showListView() {
+  hideAllViews();
+  document.getElementById('listView').className = 'list-view active';
+  document.getElementById('topbarTitle').textContent = 'リード管理';
+  document.getElementById('navLeads').classList.add('active');
+  currentLeadId = null;
+  currentLead = null;
+}
+
+function showAnalyticsView() {
+  hideAllViews();
+  document.getElementById('analyticsView').style.display = 'block';
+  document.getElementById('topbarTitle').textContent = '分析・統計';
+  document.getElementById('navAnalytics').classList.add('active');
+  renderAnalytics();
+}
+
+/* ── OPEN DETAIL ──────────────────────────────────────────────── */
+async function openDetail(id) {
+  showLoading('リード詳細を読み込み中...');
+  try {
+    const lead = await api('/api/leads/' + id);
+    currentLeadId = id;
+    currentLead = lead;
+    renderDetail(lead);
+    hideAllViews();
+    document.getElementById('detailView').className = 'detail-view active';
+    document.getElementById('topbarTitle').textContent = `${lead.name} - ${lead.clinicName || '（医院名未入力）'}`;
+    window.scrollTo(0, 0);
+  } catch (e) {
+    showToast('リードの読み込みに失敗しました');
+  }
+  hideLoading();
+}
+
+/* ── RENDER DETAIL ────────────────────────────────────────────── */
+function renderDetail(lead) {
+  document.getElementById('detName').textContent = lead.name || '-';
+  document.getElementById('detClinic').textContent = lead.clinicName || '-';
+  document.getElementById('detEmail').innerHTML = lead.email
+    ? `<a href="mailto:${esc(lead.email)}" style="color:var(--brand-blue);text-decoration:none;">${esc(lead.email)}</a>`
+    : '-';
+  document.getElementById('detPhone').innerHTML = lead.phone
+    ? `<a href="tel:${esc(lead.phone)}" style="color:var(--brand-blue);text-decoration:none;">${esc(lead.phone)}</a>`
+    : '-';
+  document.getElementById('detUrl').innerHTML = lead.url
+    ? `<a href="${esc(lead.url)}" target="_blank" style="color:var(--brand-blue);text-decoration:none;word-break:break-all;">${esc(lead.url)}</a>`
+    : '-';
+  document.getElementById('detMessage').textContent = lead.message || '（メッセージなし）';
+  document.getElementById('detStatusSelect').value = lead.status || 'new';
+  document.getElementById('detNotes').value = lead.notes || '';
+  document.getElementById('detCreatedAt').textContent = formatDate(lead.createdAt);
+  document.getElementById('detId').textContent = lead.id;
+
+  renderAnalysis(lead);
+}
+
+/* ── RENDER ANALYSIS ──────────────────────────────────────────── */
+function renderAnalysis(lead) {
+  const section = document.getElementById('analysisSection');
+
+  if (!lead.scores) {
+    section.innerHTML = `
+      <div class="detail-card">
+        <div class="no-analysis">
+          <div class="no-analysis-icon">&#128202;</div>
+          <div class="no-analysis-text">分析データがありません</div>
+          ${lead.url ? '<button class="action-btn btn-outline" style="width:auto;display:inline-block;padding:10px 20px;" onclick="reAnalyze()">&#128269; 今すぐ分析を実行</button>' : '<div style="font-size:12px;color:var(--text-muted);">URLが入力されていないため分析できません</div>'}
+        </div>
+      </div>`;
+    return;
+  }
+
+  const scores = lead.scores;
+  const total = Math.round((scores.uiux + scores.usability + scores.ia + scores.cta + scores.mobile) / 5);
+  const grade = getGrade(total);
+  const pct = total / 100;
+
+  const barData = [
+    { name: 'UI/UX デザイン', val: scores.uiux },
+    { name: 'ユーザビリティ', val: scores.usability },
+    { name: '情報設計', val: scores.ia },
+    { name: '集患導線', val: scores.cta },
+    { name: 'モバイル対応', val: scores.mobile },
+  ];
+
+  let html = '';
+
+  // Score Overview
+  html += `
+  <div class="detail-card">
+    <div class="detail-card-title"><span class="icon">&#128200;</span> 分析スコア</div>
+    <div class="score-overview">
+      <div class="total-score-wrap">
+        <div class="total-score-ring" id="detScoreRing" style="background:conic-gradient(${getColor(total)} ${pct*360}deg, #e8f6fd ${pct*360}deg);">
+          <div class="total-score-inner">
+            <div class="total-score-num" style="color:${getColor(total)};">${total}</div>
+            <div class="total-score-label">TOTAL SCORE</div>
+          </div>
+        </div>
+        <div class="total-score-grade" style="color:${grade.color};">${grade.text}</div>
+      </div>
+      <div class="score-bars">
+        ${barData.map((b, i) => `
+          <div class="score-bar-item">
+            <div class="score-bar-head">
+              <span class="score-bar-name">${b.name}</span>
+              <span class="score-bar-val" style="color:${getColor(b.val)};">${b.val}点</span>
+            </div>
+            <div class="score-bar-track">
+              <div class="score-bar-fill" id="detBar${i}" style="background:${getColor(b.val)};width:0%;"></div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+
+  // Charts
+  html += `
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-card-title">&#128336; レーダーチャート</div>
+      <div class="chart-wrap"><canvas id="detRadarChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">&#128202; カテゴリ別スコア</div>
+      <div class="chart-wrap"><canvas id="detBarChart"></canvas></div>
+    </div>
+  </div>`;
+
+  // Findings card
+  if (lead.findings) {
+    html += renderFindingsHTML(lead.findings);
+  }
+
+  // Diagnosis panels
+  if (lead.findings) {
+    html += renderDiagnosisHTML(lead.scores, lead.findings);
+  }
+
+  section.innerHTML = html;
+
+  // Animate bars
+  setTimeout(() => {
+    barData.forEach((b, i) => {
+      const el = document.getElementById('detBar' + i);
+      if (el) el.style.width = b.val + '%';
+    });
+  }, 100);
+
+  // Draw charts
+  setTimeout(() => drawDetailCharts(scores), 200);
+}
+
+/* ── FINDINGS CARD ────────────────────────────────────────────── */
+function renderFindingsHTML(f) {
+  const { meta, schema, headings, images, responsive, cta, perf, css } = f;
+
+  const items = [
+    { label: 'ページタイトル', value: meta.title || '未設定', cls: meta.title ? 'ok' : 'bad' },
+    { label: 'タイトル文字数', value: meta.title ? `${meta.title.length}文字` : '-',
+      cls: meta.title && meta.title.length >= 20 && meta.title.length <= 65 ? 'ok' : 'warn' },
+    { label: 'メタディスクリプション', value: meta.desc ? `${meta.desc.length}文字` : '未設定', cls: meta.desc ? 'ok' : 'bad' },
+    { label: 'OGP (og:title)', value: meta.ogTitle ? '設定あり' : '未設定', cls: meta.ogTitle ? 'ok' : 'warn' },
+    { label: 'OGP (og:image)', value: meta.ogImage ? '設定あり' : '未設定', cls: meta.ogImage ? 'ok' : 'warn' },
+    { label: 'canonical タグ', value: meta.canonical ? '設定あり' : '未設定', cls: meta.canonical ? 'ok' : 'warn' },
+    { label: 'viewport メタ', value: responsive.hasViewport ? truncate(responsive.viewportContent, 40) : '未設定',
+      cls: responsive.hasWidthDevice ? 'ok' : 'bad' },
+    { label: '@media クエリ', value: css && css.hasMediaQuery ? `${css.mediaCount}件` : (responsive.hasMediaQueryHtml ? '検出あり(HTML)' : '未検出'),
+      cls: (css && css.hasMediaQuery) || responsive.hasMediaQueryHtml ? 'ok' : 'bad' },
+    { label: 'H1 タグ数', value: `${headings.h1Count}個`, cls: headings.h1Count === 1 ? 'ok' : headings.h1Count === 0 ? 'bad' : 'warn' },
+    { label: 'H2 タグ数', value: `${headings.h2Count}個`, cls: headings.h2Count >= 3 ? 'ok' : headings.h2Count >= 1 ? 'warn' : 'bad' },
+    { label: '画像 alt 設定率', value: `${images.altRatio}% (${images.withAlt}/${images.total}枚)`,
+      cls: images.altRatio >= 80 ? 'ok' : images.altRatio >= 50 ? 'warn' : 'bad' },
+    { label: '構造化データ', value: schema.count > 0 ? `${schema.types} (${schema.count}件)` : '未設定',
+      cls: schema.count > 0 ? 'ok' : 'bad' },
+    { label: 'tel: リンク', value: cta.telCount > 0 ? `${cta.telCount}件 (${cta.telNums.join(', ')})` : '未検出',
+      cls: cta.telCount > 0 ? 'ok' : 'bad' },
+    { label: 'フォーム要素', value: cta.formCount > 0 ? `${cta.formCount}件` : '未検出', cls: cta.formCount > 0 ? 'ok' : 'warn' },
+    { label: 'Web予約連携', value: cta.hasOnlineBooking ? '連携あり' : '未検出', cls: cta.hasOnlineBooking ? 'ok' : 'warn' },
+    { label: '予約キーワード', value: cta.hasBooking ? '検出あり' : '未検出', cls: cta.hasBooking ? 'ok' : 'bad' },
+    { label: 'アクセス情報', value: cta.hasAccess ? '検出あり' : '未検出', cls: cta.hasAccess ? 'ok' : 'warn' },
+    { label: '診療時間情報', value: cta.hasHours ? '検出あり' : '未検出', cls: cta.hasHours ? 'ok' : 'bad' },
+    { label: 'HTML サイズ', value: `${perf.sizeKB} KB`,
+      cls: perf.sizeKB < 200 ? 'ok' : perf.sizeKB < 400 ? 'warn' : 'bad' },
+    { label: '取得時間', value: `${perf.fetchTime} ms`,
+      cls: perf.fetchTime < 3000 ? 'ok' : perf.fetchTime < 6000 ? 'warn' : 'bad' },
+  ];
+
+  return `
+  <div class="findings-card">
+    <div class="findings-card-title">&#128269; 検出データ一覧</div>
+    <div class="findings-grid">
+      ${items.map(it => `
+        <div class="finding-item">
+          <div class="finding-label">${it.label}</div>
+          <div class="finding-value finding-${it.cls}">${truncate(it.value, 55) || '-'}</div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ── DIAGNOSIS PANELS ─────────────────────────────────────────── */
+function renderDiagnosisHTML(scores, findings) {
+  const { meta, schema, headings, images, responsive, cta, perf, css } = findings;
+
+  const tabs = [
+    { name: 'UI/UX', score: scores.uiux },
+    { name: 'ユーザビリティ', score: scores.usability },
+    { name: '情報設計', score: scores.ia },
+    { name: '集患導線', score: scores.cta },
+    { name: 'モバイル対応', score: scores.mobile },
+  ];
+
+  // Detected data per panel
+  const panelDetected = [
+    [
+      { key: '検出タイトル', val: meta.title || '未設定', cls: meta.title ? '' : 'bad' },
+      { key: 'ディスクリプション', val: meta.desc ? truncate(meta.desc, 70) : '未設定', cls: meta.desc ? '' : 'bad' },
+      { key: 'OGP設定', val: (meta.ogTitle && meta.ogImage) ? '完備' : meta.ogTitle ? '一部設定' : '未設定', cls: (meta.ogTitle && meta.ogImage) ? 'ok' : 'warn' },
+      { key: '画像枚数', val: `${images.total}枚`, cls: images.total > 0 ? '' : 'warn' },
+      { key: 'og:image', val: meta.ogImage ? truncate(meta.ogImage, 60) : '未設定', cls: meta.ogImage ? 'ok' : 'warn' },
+      { key: 'charset', val: meta.charset || '未検出', cls: meta.charset ? '' : 'warn' },
+    ],
+    [
+      { key: 'H1タグ', val: headings.h1Count > 0 ? `${headings.h1Count}個 "${truncate(headings.h1[0],35)}"` : '未設定', cls: headings.h1Count === 1 ? 'ok' : headings.h1Count === 0 ? 'bad' : 'warn' },
+      { key: 'H2タグ数', val: `${headings.h2Count}個`, cls: headings.h2Count >= 3 ? 'ok' : 'warn' },
+      { key: 'H3タグ数', val: `${headings.h3Count}個`, cls: '' },
+      { key: '画像alt設定率', val: `${images.altRatio}% (${images.withAlt}/${images.total}枚)`, cls: images.altRatio >= 80 ? 'ok' : 'warn' },
+      { key: '取得速度', val: `${perf.fetchTime}ms`, cls: perf.fetchTime < 3000 ? 'ok' : perf.fetchTime < 6000 ? 'warn' : 'bad' },
+      { key: 'HTMLサイズ', val: `${perf.sizeKB}KB`, cls: perf.sizeKB < 200 ? 'ok' : 'warn' },
+    ],
+    [
+      { key: '構造化データ', val: schema.count > 0 ? `${schema.types} (${schema.count}件)` : '未設定', cls: schema.count > 0 ? 'ok' : 'bad' },
+      { key: '医療スキーマ', val: schema.hasMedical ? 'あり' : '未設定', cls: schema.hasMedical ? 'ok' : 'warn' },
+      { key: 'LocalBusiness', val: schema.hasLocalBiz ? 'あり' : '未設定', cls: schema.hasLocalBiz ? 'ok' : 'warn' },
+      { key: 'canonicalタグ', val: meta.canonical ? '設定あり' : '未設定', cls: meta.canonical ? 'ok' : 'warn' },
+      { key: 'robots', val: meta.robots || '未設定（デフォルト）', cls: '' },
+      { key: 'クリニック名(schema)', val: schema.clinicName || '未検出', cls: schema.clinicName ? 'ok' : '' },
+    ],
+    [
+      { key: 'tel:リンク', val: cta.telCount > 0 ? `${cta.telCount}件 (${cta.telNums.join(' / ')})` : '未検出', cls: cta.telCount > 0 ? 'ok' : 'bad' },
+      { key: 'フォーム', val: cta.formCount > 0 ? `${cta.formCount}件` : '未検出', cls: cta.formCount > 0 ? 'ok' : 'warn' },
+      { key: 'Web予約連携', val: cta.hasOnlineBooking ? 'あり' : '未確認', cls: cta.hasOnlineBooking ? 'ok' : 'warn' },
+      { key: '予約キーワード', val: cta.hasBooking ? '検出あり' : '未検出', cls: cta.hasBooking ? 'ok' : 'bad' },
+      { key: 'アクセス情報', val: cta.hasAccess ? '検出あり' : '未検出', cls: cta.hasAccess ? 'ok' : 'warn' },
+      { key: '診療時間', val: cta.hasHours ? '検出あり' : '未検出', cls: cta.hasHours ? 'ok' : 'bad' },
+      { key: 'CTAリンク数', val: `${cta.ctaLinkCount}件`, cls: cta.ctaLinkCount >= 3 ? 'ok' : cta.ctaLinkCount >= 1 ? 'warn' : 'bad' },
+    ],
+    [
+      { key: 'viewportメタ', val: responsive.hasViewport ? truncate(responsive.viewportContent, 50) : '未設定', cls: responsive.hasWidthDevice ? 'ok' : 'bad' },
+      { key: '@mediaクエリ数', val: css ? `${css.mediaCount}件` : (responsive.hasMediaQueryHtml ? '検出あり' : '未検出'), cls: (css && css.mediaCount > 0) || responsive.hasMediaQueryHtml ? 'ok' : 'bad' },
+      { key: 'Flexbox', val: css && css.hasFlexbox ? '使用あり' : '未使用', cls: css && css.hasFlexbox ? 'ok' : '' },
+      { key: 'CSS Grid', val: css && css.hasGrid ? '使用あり' : '未使用', cls: css && css.hasGrid ? 'ok' : '' },
+      { key: 'pictureタグ', val: responsive.hasPicture ? 'あり' : '未使用', cls: responsive.hasPicture ? 'ok' : '' },
+      { key: '固定幅テーブル', val: responsive.hasFixedWidthTable ? '検出（要対応）' : '未検出（良好）', cls: responsive.hasFixedWidthTable ? 'bad' : 'ok' },
+      { key: 'ブレイクポイント', val: css && css.breakpoints && css.breakpoints.length > 0 ? css.breakpoints.join(', ') : '未検出', cls: '' },
+    ],
+  ];
+
+  // Panel diagnosis content
+  const diagContent = [
+    // UI/UX
+    {
+      current: 'タイトル: ' + (meta.title || '未設定') + '\n' +
+               'ディスクリプション: ' + (meta.desc ? `${meta.desc.length}文字` : '未設定') + '\n' +
+               'OGP: ' + ((meta.ogTitle && meta.ogImage) ? '設定済み' : '不完全') + '\n' +
+               '画像: ' + images.total + '枚 (alt設定率: ' + images.altRatio + '%)',
+      problem: (!meta.title ? 'タイトルが未設定です。検索結果での表示に大きく影響します。\n' : '') +
+               (!meta.desc ? 'メタディスクリプションが未設定です。CTRの低下に繋がります。\n' : '') +
+               (!meta.ogImage ? 'OGP画像が未設定です。SNSでのシェア時に画像が表示されません。\n' : '') +
+               (images.altRatio < 50 ? '画像のalt属性設定率が低いです。SEOとアクセシビリティに影響します。' : '') ||
+               '大きな問題は検出されませんでした。',
+      improve: 'タイトルは30〜60文字、ディスクリプションは80〜160文字が推奨です。\nOGP画像は1200x630pxのオリジナル画像を設定しましょう。\nすべての画像に適切なalt属性を記述してください。',
+    },
+    // Usability
+    {
+      current: 'H1タグ: ' + headings.h1Count + '個\n' +
+               'H2タグ: ' + headings.h2Count + '個\n' +
+               '画像alt: ' + images.altRatio + '%\n' +
+               'レスポンス: ' + perf.fetchTime + 'ms',
+      problem: (headings.h1Count === 0 ? 'H1タグがありません。ページの主題が不明確です。\n' : '') +
+               (headings.h1Count > 1 ? 'H1タグが複数あります。ページの主題を1つに絞ってください。\n' : '') +
+               (headings.h2Count < 3 ? 'H2タグが少ないです。コンテンツの構造化が不十分です。\n' : '') +
+               (images.altRatio < 50 ? 'alt属性の設定率が低いです。\n' : '') +
+               (perf.fetchTime >= 5000 ? 'ページの読み込みが遅いです。UX悪化の原因になります。' : '') ||
+               '大きな問題は検出されませんでした。',
+      improve: 'H1タグは1ページに1つ、簡潔で明確な見出しを設定してください。\nH2/H3を適切に使い、情報の階層構造を整理しましょう。\nページの読み込み速度を3秒以内に抑えることを目標にしてください。',
+    },
+    // 情報設計
+    {
+      current: '構造化データ: ' + (schema.count > 0 ? schema.types : '未設定') + '\n' +
+               '医療スキーマ: ' + (schema.hasMedical ? 'あり' : 'なし') + '\n' +
+               'canonical: ' + (meta.canonical ? '設定あり' : '未設定'),
+      problem: (schema.count === 0 ? '構造化データ（Schema.org）が未設定です。Google検索での表示が不利になります。\n' : '') +
+               (!schema.hasMedical ? '医療機関向けスキーマが未設定です。ローカルSEOに影響します。\n' : '') +
+               (!meta.canonical ? 'canonicalタグが未設定です。重複コンテンツ対策が不十分です。' : '') ||
+               '大きな問題は検出されませんでした。',
+      improve: 'MedicalClinic/Hospitalなどの構造化データを追加してください。\n住所・電話番号・診療時間をSchemaに含めると、Google検索でリッチスニペットが表示されます。\ncanonicalタグで正規URLを指定してください。',
+    },
+    // 集患導線
+    {
+      current: '電話リンク: ' + cta.telCount + '件\n' +
+               'フォーム: ' + cta.formCount + '件\n' +
+               'Web予約: ' + (cta.hasOnlineBooking ? 'あり' : 'なし') + '\n' +
+               '診療時間表示: ' + (cta.hasHours ? 'あり' : 'なし'),
+      problem: (cta.telCount === 0 ? '電話リンク（tel:）がありません。スマートフォンからの電話が不便です。\n' : '') +
+               (cta.formCount === 0 ? '問い合わせフォームがありません。Web経由の問い合わせを逃しています。\n' : '') +
+               (!cta.hasHours ? '診療時間の記載が見つかりません。来院検討者が離脱する原因になります。\n' : '') +
+               (!cta.hasBooking ? 'Web予約に関するキーワードが見つかりません。' : '') ||
+               '大きな問題は検出されませんでした。',
+      improve: 'ヘッダーとフッターに電話番号のtel:リンクを設置してください。\nWeb予約システム（EPARK、Airリザーブ等）の導入を検討してください。\n診療時間・アクセス情報は全ページから容易にアクセスできる位置に配置しましょう。',
+    },
+    // モバイル対応
+    {
+      current: 'viewport: ' + (responsive.hasViewport ? '設定あり' : '未設定') + '\n' +
+               '@mediaクエリ: ' + (css ? css.mediaCount + '件' : '不明') + '\n' +
+               'Flexbox: ' + (css && css.hasFlexbox ? 'あり' : 'なし') + '\n' +
+               'CSS Grid: ' + (css && css.hasGrid ? 'あり' : 'なし'),
+      problem: (!responsive.hasViewport ? 'viewport metaタグが未設定です。モバイル表示が崩れている可能性が高いです。\n' : '') +
+               (css && css.mediaCount === 0 && !responsive.hasMediaQueryHtml ? '@mediaクエリが検出されません。レスポンシブデザインが実装されていない可能性があります。\n' : '') +
+               (responsive.hasFixedWidthTable ? '固定幅テーブルが検出されました。モバイルで横スクロールが発生します。\n' : '') +
+               (css && css.hasFixedBody ? '固定幅レイアウトが検出されました。モバイル対応が不十分です。' : '') ||
+               '大きな問題は検出されませんでした。',
+      improve: 'viewport metaタグに width=device-width, initial-scale=1 を設定してください。\nFlexboxやCSS Gridを使ったレスポンシブレイアウトに移行しましょう。\n768px, 1024pxなどの主要ブレイクポイントでの表示確認を行ってください。',
+    },
+  ];
+
+  let html = `
+  <div class="detail-card" style="padding:0; border:none; box-shadow:none; background:transparent;">
+    <div style="padding:0 0 16px 0;">
+      <div class="detail-card-title" style="margin-bottom:0;"><span class="icon">&#128300;</span> 詳細診断</div>
+    </div>
+    <div class="diagnosis-tabs">
+      ${tabs.map((t, i) => `
+        <button class="diagnosis-tab ${i === 0 ? 'active' : ''}" onclick="switchDiagTab(${i})">
+          ${t.name}<br><span style="font-size:10px;">${t.score}点</span>
+        </button>`).join('')}
+    </div>`;
+
+  tabs.forEach((t, i) => {
+    const badge = t.score >= 70 ? 'badge-green' : t.score >= 45 ? 'badge-yellow' : 'badge-red';
+    const badgeText = t.score >= 70 ? '良好' : t.score >= 45 ? '要改善' : '問題あり';
+    const d = diagContent[i];
+    const detected = panelDetected[i];
+
+    html += `
+    <div class="diagnosis-panel ${i === 0 ? 'active' : ''}" id="detPanel${i}">
+      <!-- Detected data -->
+      <div class="detected-data">
+        <div class="detected-data-title">&#128270; 検出データ（実測値）</div>
+        ${detected.map(r => `
+          <div class="detected-row">
+            <span class="detected-key">${r.key}</span>
+            <span class="detected-val ${r.cls || ''}">${r.val || '-'}</span>
+          </div>`).join('')}
+      </div>
+
+      <div class="diag-card">
+        <div class="diag-card-head">
+          <span class="diag-badge ${badge}">${badgeText}</span>
+          <span class="diag-card-title">${t.name}</span>
+          <span class="diag-card-score" style="color:${getColor(t.score)};">${t.score}点</span>
+        </div>
+        <div class="diag-card-body">
+          <div class="diag-row">
+            <div class="diag-col">
+              <span class="diag-col-label label-current">現状</span>
+              <div class="diag-col-text">${d.current.replace(/\n/g, '<br>')}</div>
+            </div>
+            <div class="diag-col">
+              <span class="diag-col-label label-problem">問題点</span>
+              <div class="diag-col-text">${d.problem.replace(/\n/g, '<br>')}</div>
+            </div>
+            <div class="diag-col">
+              <span class="diag-col-label label-improve">改善提案</span>
+              <div class="diag-col-text">${d.improve.replace(/\n/g, '<br>')}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  html += '</div>';
+  return html;
+}
+
+/* ── DIAGNOSIS TAB SWITCH ─────────────────────────────────────── */
+function switchDiagTab(idx) {
+  document.querySelectorAll('.diagnosis-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  for (let i = 0; i < 5; i++) {
+    const p = document.getElementById('detPanel' + i);
+    if (p) p.classList.toggle('active', i === idx);
+  }
+}
+
+/* ── CHARTS ───────────────────────────────────────────────────── */
+function drawDetailCharts(scores) {
+  const labels = ['UI/UX', 'ユーザビリティ', '情報設計', '集患導線', 'モバイル'];
+  const data = [scores.uiux, scores.usability, scores.ia, scores.cta, scores.mobile];
+  const colors = data.map(getColor);
+
+  if (radarChart) { radarChart.destroy(); radarChart = null; }
+  if (barChart) { barChart.destroy(); barChart = null; }
+
+  const radarEl = document.getElementById('detRadarChart');
+  const barEl = document.getElementById('detBarChart');
+  if (!radarEl || !barEl) return;
+
+  radarChart = new Chart(radarEl.getContext('2d'), {
+    type: 'radar',
+    data: { labels, datasets: [{
+      label: 'スコア', data,
+      backgroundColor: 'rgba(42,172,226,0.15)',
+      borderColor: '#2AACE2', borderWidth: 2,
+      pointBackgroundColor: colors, pointRadius: 5,
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { r: { min:0, max:100, ticks:{ stepSize:25, font:{size:10} },
+        pointLabels:{ font:{size:10, weight:'700'} } } },
+      plugins: { legend:{ display:false } },
+      animation: { duration:800 }
+    }
+  });
+
+  barChart = new Chart(barEl.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{
+      label: 'スコア', data,
+      backgroundColor: colors.map(c => c + 'bb'),
+      borderColor: colors, borderWidth: 2, borderRadius: 6,
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y:{ min:0, max:100, ticks:{ stepSize:25, font:{size:10} } },
+                x:{ ticks:{ font:{size:10} } } },
+      plugins: { legend:{ display:false } },
+      animation: { duration:700 }
+    }
+  });
+}
+
+/* ── SAVE STATUS ──────────────────────────────────────────────── */
+async function saveStatus() {
+  if (!currentLeadId) return;
+  const status = document.getElementById('detStatusSelect').value;
+  try {
+    await api('/api/leads/' + currentLeadId, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+    showToast('ステータスを更新しました');
+    loadLeads(); // refresh list in background
+  } catch (e) {
+    showToast('更新に失敗しました');
+  }
+}
+
+/* ── SAVE NOTES ───────────────────────────────────────────────── */
+async function saveNotes() {
+  if (!currentLeadId) return;
+  const notes = document.getElementById('detNotes').value;
+  try {
+    await api('/api/leads/' + currentLeadId, {
+      method: 'PATCH',
+      body: JSON.stringify({ notes }),
+    });
+    showToast('メモを保存しました');
+  } catch (e) {
+    showToast('保存に失敗しました');
+  }
+}
+
+/* ── RE-ANALYZE ───────────────────────────────────────────────── */
+async function reAnalyze() {
+  if (!currentLead || !currentLead.url) {
+    showToast('URLが設定されていないため分析できません');
+    return;
+  }
+
+  const btn = document.getElementById('btnReanalyze');
+  if (btn) { btn.disabled = true; btn.textContent = '分析中...'; }
+  showLoading('サイトを再分析中...');
+
+  try {
+    const result = await api('/api/analyze-only', {
+      method: 'POST',
+      body: JSON.stringify({ url: currentLead.url }),
+    });
+
+    if (result.ok) {
+      // Update lead with new scores and findings
+      await api('/api/leads/' + currentLeadId, {
+        method: 'PATCH',
+        body: JSON.stringify({}), // trigger to reload
+      });
+
+      // Update local data and re-render
+      currentLead.scores = result.scores;
+      currentLead.findings = result.findings;
+      renderDetail(currentLead);
+      showToast('再分析が完了しました');
+      loadLeads(); // refresh list stats
+    } else {
+      showToast('分析に失敗しました: ' + (result.error || '不明なエラー'));
+    }
+  } catch (e) {
+    showToast('分析中にエラーが発生しました');
+  }
+
+  hideLoading();
+  if (btn) { btn.disabled = false; btn.textContent = '\u{1F50D} 再分析を実行'; }
+}
+
+/* ── ANALYTICS CHARTS (stored references) ────────────────────── */
+let analyticsCharts = { time: null, status: null, scoreDist: null, avg: null };
+
+function destroyAnalyticsCharts() {
+  Object.keys(analyticsCharts).forEach(k => {
+    if (analyticsCharts[k]) { analyticsCharts[k].destroy(); analyticsCharts[k] = null; }
+  });
+}
+
+/* ── RENDER ANALYTICS ────────────────────────────────────────── */
+function renderAnalytics() {
+  const leads = allLeads;
+  const total = leads.length;
+  const newCount = leads.filter(l => l.status === 'new').length;
+  const contactedCount = leads.filter(l => l.status === 'contacted').length;
+  const contractedCount = leads.filter(l => l.status === 'contracted').length;
+  const lostCount = leads.filter(l => l.status === 'lost').length;
+  const responded = contactedCount + contractedCount + lostCount; // not 'new'
+  const decided = contractedCount + lostCount;
+
+  // KPI cards
+  document.getElementById('aTotal').textContent = total;
+  document.getElementById('aTotalSub').textContent = total > 0 ? '全期間' : 'データなし';
+  document.getElementById('aNew').textContent = newCount;
+  document.getElementById('aNewSub').textContent = total > 0 ? `全体の ${pct(newCount, total)}` : '-';
+  document.getElementById('aContacted').textContent = contactedCount;
+  document.getElementById('aContactedSub').textContent = total > 0 ? `全体の ${pct(contactedCount, total)}` : '-';
+  document.getElementById('aContracted').textContent = contractedCount;
+  document.getElementById('aContractedSub').textContent = total > 0 ? `全体の ${pct(contractedCount, total)}` : '-';
+  document.getElementById('aLost').textContent = lostCount;
+  document.getElementById('aLostSub').textContent = total > 0 ? `全体の ${pct(lostCount, total)}` : '-';
+
+  // Funnel
+  const funnelBars = [
+    { id: 'funnelTotal', valId: 'funnelTotalVal', count: total, maxW: 100 },
+    { id: 'funnelContacted', valId: 'funnelContactedVal', count: responded, maxW: total > 0 ? (responded / total * 100) : 0 },
+    { id: 'funnelDecided', valId: 'funnelDecidedVal', count: decided, maxW: total > 0 ? (decided / total * 100) : 0 },
+    { id: 'funnelWon', valId: 'funnelWonVal', count: contractedCount, maxW: total > 0 ? (contractedCount / total * 100) : 0 },
+  ];
+  funnelBars.forEach(f => {
+    document.getElementById(f.valId).textContent = f.count;
+    const bar = document.querySelector(`#${f.id} .funnel-bar`);
+    if (bar) bar.style.width = Math.max(f.maxW, 5) + '%';
+  });
+
+  // Rates
+  document.getElementById('rateContact').textContent = total > 0 ? pct(responded, total) : '-';
+  document.getElementById('rateWinAll').textContent = total > 0 ? pct(contractedCount, total) : '-';
+  document.getElementById('rateWinDecided').textContent = decided > 0 ? pct(contractedCount, decided) : '-';
+  document.getElementById('rateLostDecided').textContent = decided > 0 ? pct(lostCount, decided) : '-';
+
+  // Recent leads table
+  const recent = leads.slice(0, 10);
+  const tbody = document.getElementById('analyticsRecentBody');
+  if (recent.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="table-empty">リードがありません</td></tr>';
+  } else {
+    tbody.innerHTML = recent.map(l => `
+      <tr style="cursor:pointer;" onclick="showListView(); setTimeout(()=>openDetail('${l.id}'),100);">
+        <td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">${formatDate(l.createdAt)}</td>
+        <td><span class="status-badge ${statusClass(l.status)}">${statusLabel(l.status)}</span></td>
+        <td style="font-weight:600;">${esc(l.name)}</td>
+        <td>${esc(l.clinicName || '-')}</td>
+        <td style="text-align:center;">
+          ${l.totalScore !== null
+            ? `<span class="table-score" style="color:${getColor(l.totalScore)}">${l.totalScore}</span>`
+            : '<span style="color:var(--text-muted);">-</span>'}
+        </td>
+      </tr>`).join('');
+  }
+
+  // Charts
+  destroyAnalyticsCharts();
+  renderTimeChart(leads);
+  renderStatusChart(newCount, contactedCount, contractedCount, lostCount);
+  renderScoreDistChart(leads);
+  renderAvgScoreChart(leads);
+}
+
+function pct(n, d) {
+  if (d === 0) return '0%';
+  return (n / d * 100).toFixed(1) + '%';
+}
+
+/* ── TIME CHART (daily leads) ────────────────────────────────── */
+function renderTimeChart(leads) {
+  const el = document.getElementById('analyticsTimeChart');
+  if (!el) return;
+
+  // Group by date
+  const dateMap = {};
+  leads.forEach(l => {
+    const d = l.createdAt ? l.createdAt.slice(0, 10) : null;
+    if (d) dateMap[d] = (dateMap[d] || 0) + 1;
+  });
+
+  const sorted = Object.keys(dateMap).sort();
+  if (sorted.length === 0) {
+    sorted.push(new Date().toISOString().slice(0, 10));
+    dateMap[sorted[0]] = 0;
+  }
+
+  // Fill gaps
+  const labels = [];
+  const data = [];
+  if (sorted.length > 0) {
+    const start = new Date(sorted[0]);
+    const end = new Date(sorted[sorted.length - 1]);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      labels.push(key.slice(5)); // MM-DD
+      data.push(dateMap[key] || 0);
+    }
+  }
+
+  analyticsCharts.time = new Chart(el.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'リード数',
+        data,
+        borderColor: '#2AACE2',
+        backgroundColor: 'rgba(42,172,226,0.1)',
+        fill: true,
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: data.length <= 30 ? 4 : 2,
+        pointBackgroundColor: '#2AACE2',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } },
+        x: { ticks: { font: { size: 9 }, maxTicksLimit: 15 } }
+      },
+      plugins: { legend: { display: false } },
+    }
+  });
+}
+
+/* ── STATUS DOUGHNUT ─────────────────────────────────────────── */
+function renderStatusChart(newC, contacted, contracted, lost) {
+  const el = document.getElementById('analyticsStatusChart');
+  if (!el) return;
+
+  analyticsCharts.status = new Chart(el.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['新規', '対応中', '成約', '失注'],
+      datasets: [{
+        data: [newC, contacted, contracted, lost],
+        backgroundColor: ['#1a7fd4', '#f5a623', '#2ecc71', '#aaa'],
+        borderWidth: 2,
+        borderColor: '#fff',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '55%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11, weight: '700' }, padding: 16 } }
+      }
+    }
+  });
+}
+
+/* ── SCORE DISTRIBUTION ──────────────────────────────────────── */
+function renderScoreDistChart(leads) {
+  const el = document.getElementById('analyticsScoreDistChart');
+  if (!el) return;
+
+  const buckets = { '0-19': 0, '20-39': 0, '40-59': 0, '60-79': 0, '80-100': 0 };
+  leads.forEach(l => {
+    if (l.totalScore === null || l.totalScore === undefined) return;
+    const s = l.totalScore;
+    if (s < 20) buckets['0-19']++;
+    else if (s < 40) buckets['20-39']++;
+    else if (s < 60) buckets['40-59']++;
+    else if (s < 80) buckets['60-79']++;
+    else buckets['80-100']++;
+  });
+
+  analyticsCharts.scoreDist = new Chart(el.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(buckets).map(k => k + '点'),
+      datasets: [{
+        label: '件数',
+        data: Object.values(buckets),
+        backgroundColor: ['#e85252bb', '#e67e22bb', '#f5a623bb', '#27ae60bb', '#2ecc71bb'],
+        borderColor: ['#e85252', '#e67e22', '#f5a623', '#27ae60', '#2ecc71'],
+        borderWidth: 2,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } },
+        x: { ticks: { font: { size: 10 } } }
+      },
+      plugins: { legend: { display: false } },
+    }
+  });
+}
+
+/* ── AVG CATEGORY SCORES ─────────────────────────────────────── */
+function renderAvgScoreChart(leads) {
+  const el = document.getElementById('analyticsAvgChart');
+  if (!el) return;
+
+  const withScores = leads.filter(l => l.scores);
+
+  if (withScores.length === 0) {
+    analyticsCharts.avg = new Chart(el.getContext('2d'), {
+      type: 'radar',
+      data: { labels: ['UI/UX','ユーザビリティ','情報設計','集患導線','モバイル'], datasets: [{ label: '平均', data: [0,0,0,0,0], borderColor: '#ccc' }] },
+      options: { responsive: true, maintainAspectRatio: false, scales: { r: { min:0, max:100 } }, plugins: { legend: { display: false } } }
+    });
+    return;
+  }
+
+  const n = withScores.length;
+  const avgUiux = Math.round(withScores.reduce((s, l) => s + (l.scores.uiux || 0), 0) / n);
+  const avgUsability = Math.round(withScores.reduce((s, l) => s + (l.scores.usability || 0), 0) / n);
+  const avgIa = Math.round(withScores.reduce((s, l) => s + (l.scores.ia || 0), 0) / n);
+  const avgCta = Math.round(withScores.reduce((s, l) => s + (l.scores.cta || 0), 0) / n);
+  const avgMobile = Math.round(withScores.reduce((s, l) => s + (l.scores.mobile || 0), 0) / n);
+
+  analyticsCharts.avg = new Chart(el.getContext('2d'), {
+    type: 'radar',
+    data: {
+      labels: ['UI/UX', 'ユーザビリティ', '情報設計', '集患導線', 'モバイル'],
+      datasets: [{
+        label: '平均スコア',
+        data: [avgUiux, avgUsability, avgIa, avgCta, avgMobile],
+        backgroundColor: 'rgba(42,172,226,0.15)',
+        borderColor: '#2AACE2',
+        borderWidth: 2,
+        pointBackgroundColor: '#2AACE2',
+        pointRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { r: { min:0, max:100, ticks:{ stepSize:25, font:{size:10} }, pointLabels:{ font:{size:10, weight:'700'} } } },
+      plugins: { legend: { display: false } },
+    }
+  });
+}
+
+/* ── DELETE LEAD ──────────────────────────────────────────────── */
+async function deleteLead() {
+  if (!currentLeadId) return;
+  if (!confirm('このリードを削除しますか？\nこの操作は元に戻せません。')) return;
+
+  showLoading('削除中...');
+  try {
+    await api('/api/leads/' + currentLeadId, { method: 'DELETE' });
+    showToast('リードを削除しました');
+    await loadLeads();
+    showListView();
+  } catch (e) {
+    showToast('削除に失敗しました');
+  }
+  hideLoading();
+}
+</script>
+</body>
+</html>
