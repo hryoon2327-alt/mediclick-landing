@@ -8,6 +8,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://npmcdn.com/flatpickr/dist/l10n/ja.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -753,11 +756,11 @@
           <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
             <div>
               <div class="info-label">期間（開始）</div>
-              <input type="date" class="form-filter-input" id="csvFrom" lang="ja" />
+              <input type="text" class="form-filter-input" id="csvFrom" placeholder="年-月-日" readonly />
             </div>
             <div>
               <div class="info-label">期間（終了）</div>
-              <input type="date" class="form-filter-input" id="csvTo" lang="ja" />
+              <input type="text" class="form-filter-input" id="csvTo" placeholder="年-月-日" readonly />
             </div>
             <div>
               <div class="info-label">診療科目</div>
@@ -1030,7 +1033,19 @@ let barChart = null;
 /* ── INIT ─────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   loadLeads();
+  initDatePickers();
 });
+
+function initDatePickers() {
+  if (typeof flatpickr === 'undefined') return;
+  const opts = {
+    locale: (flatpickr.l10ns && flatpickr.l10ns.ja) ? 'ja' : 'default',
+    dateFormat: 'Y-m-d',
+    allowInput: false,
+  };
+  flatpickr('#csvFrom', opts);
+  flatpickr('#csvTo',   opts);
+}
 
 /* ── API HELPERS ──────────────────────────────────────────────── */
 async function api(url, opts = {}) {
