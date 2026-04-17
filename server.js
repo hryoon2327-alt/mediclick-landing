@@ -806,7 +806,8 @@ function saveDiagnosisRecord(url, scores, findings) {
     totalScore: total,
     scores,
     title:      findings.meta?.title || '',
-    hasLead:    false,  // updated when form is submitted
+    hasLead:    false,
+    salesStatus: '未対応',
   });
   // Keep max 1000 records
   if (records.length > 1000) records.length = 1000;
@@ -819,21 +820,59 @@ app.get('/api/diagnoses', (req, res) => {
   res.json(records);
 });
 
-/* GET /api/csv/diagnoses — all diagnoses CSV */
-app.get('/api/csv/diagnoses', (req, res) => {
+/* PATCH /api/diagnoses/status — update salesStatus for all records with same URL */
+app.patch('/api/diagnoses/status', (req, res) => {
+  const { url, salesStatus } = req.body;
+  if (!url || !salesStatus) return res.status(400).json({ error: 'url and salesStatus required' });
   const records = readDiagnoses();
-  const header = '診断日時,URL,サイトタイトル,総合スコア,第一印象,使いやすさ,検索対策,予約導線,スマホ対応,相談申込';
-  const rows = records.map(r => {
+  let updated = 0;
+  records.forEach(r => {
+    if (r.url === url) { r.salesStatus = salesStatus; updated++; }
+  });
+  if (updated > 0) fs.writeFileSync(DIAG_FILE, JSON.stringify(records, null, 2), 'utf-8');
+  res.json({ ok: true, updated });
+});
+
+/* GET /api/csv/diagnoses — grouped diagnoses CSV with filters */
+app.get('/api/csv/diagnoses', (req, res) => {
+  let records = readDiagnoses();
+  const { from, to, salesStatus } = req.query;
+  if (from) records = records.filter(r => r.createdAt >= from);
+  if (to)   records = records.filter(r => r.createdAt <= to + 'T23:59:59.999Z');
+  if (salesStatus) records = records.filter(r => r.salesStatus === salesStatus);
+
+  // Group by URL
+  const map = {};
+  records.forEach(r => {
+    if (!map[r.url]) {
+      map[r.url] = { url: r.url, title: r.title, firstDate: r.createdAt, lastDate: r.createdAt,
+        count: 0, latestScore: r.totalScore, scores: r.scores, hasLead: false, salesStatus: r.salesStatus || '未対応' };
+    }
+    map[r.url].count++;
+    if (r.createdAt < map[r.url].firstDate) map[r.url].firstDate = r.createdAt;
+    if (r.createdAt > map[r.url].lastDate) {
+      map[r.url].lastDate = r.createdAt;
+      map[r.url].latestScore = r.totalScore;
+      map[r.url].scores = r.scores;
+      map[r.url].title = r.title || map[r.url].title;
+    }
+    if (r.hasLead) map[r.url].hasLead = true;
+    if (r.salesStatus && r.salesStatus !== '未対応') map[r.url].salesStatus = r.salesStatus;
+  });
+
+  const grouped = Object.values(map).sort((a, b) => b.lastDate.localeCompare(a.lastDate));
+  const header = '初回診断,最終診断,URL,サイトタイトル,診断回数,最新スコア,第一印象,使いやすさ,検索対策,予約導線,スマホ対応,営業ステータス,相談申込';
+  const rows = grouped.map(r => {
     const s = r.scores || {};
     return [
-      r.createdAt, r.url, r.title, r.totalScore,
+      r.firstDate, r.lastDate, r.url, r.title, r.count, r.latestScore,
       s.uiux || '', s.usability || '', s.ia || '', s.cta || '', s.mobile || '',
-      r.hasLead ? 'あり' : 'なし',
+      r.salesStatus, r.hasLead ? 'あり' : 'なし',
     ].map(csvEscape).join(',');
   });
   const bom = '\uFEFF';
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="all_diagnoses.csv"');
+  res.setHeader('Content-Disposition', 'attachment; filename="diagnoses.csv"');
   res.send(bom + header + '\n' + rows.join('\n'));
 });
 
