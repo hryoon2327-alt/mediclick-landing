@@ -666,6 +666,11 @@
         <span class="nav-icon">&#128202;</span>
         <span>分析・統計</span>
       </div>
+      <div class="nav-item" id="navDiagnoses" onclick="showDiagnosesView()">
+        <span class="nav-icon">&#128270;</span>
+        <span>診断履歴</span>
+        <span class="nav-badge" id="navDiagCount" style="background:#888;">0</span>
+      </div>
       <div class="nav-item" onclick="window.open('/', '_blank')">
         <span class="nav-icon">&#127760;</span>
         <span>公開ページ</span>
@@ -915,6 +920,30 @@
             </thead>
             <tbody id="analyticsRecentBody">
               <tr><td colspan="5" class="table-empty">データなし</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ====== DIAGNOSES VIEW ====== -->
+      <div id="diagnosesView" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <h3 style="font-size:16px; font-weight:900; color:var(--brand-navy);">全診断履歴（相談申込の有無を問わず）</h3>
+          <button class="csv-dl-btn" onclick="window.open('/api/csv/diagnoses','_blank')">&#128196; 全履歴CSV</button>
+        </div>
+        <div class="table-card">
+          <table class="lead-table">
+            <thead>
+              <tr>
+                <th>診断日時</th>
+                <th>URL</th>
+                <th>サイトタイトル</th>
+                <th style="text-align:center;">総合スコア</th>
+                <th style="text-align:center;">相談申込</th>
+              </tr>
+            </thead>
+            <tbody id="diagTableBody">
+              <tr><td colspan="5" class="table-empty">読み込み中...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1180,8 +1209,10 @@ function hideAllViews() {
   document.getElementById('listView').className = 'list-view';
   document.getElementById('detailView').className = 'detail-view';
   document.getElementById('analyticsView').style.display = 'none';
+  document.getElementById('diagnosesView').style.display = 'none';
   document.getElementById('navLeads').classList.remove('active');
   document.getElementById('navAnalytics').classList.remove('active');
+  document.getElementById('navDiagnoses').classList.remove('active');
 }
 
 function showListView() {
@@ -1199,6 +1230,42 @@ function showAnalyticsView() {
   document.getElementById('topbarTitle').textContent = '分析・統計';
   document.getElementById('navAnalytics').classList.add('active');
   renderAnalytics();
+}
+
+function showDiagnosesView() {
+  hideAllViews();
+  document.getElementById('diagnosesView').style.display = 'block';
+  document.getElementById('topbarTitle').textContent = '診断履歴';
+  document.getElementById('navDiagnoses').classList.add('active');
+  loadDiagnoses();
+}
+
+async function loadDiagnoses() {
+  const tbody = document.getElementById('diagTableBody');
+  try {
+    const records = await api('/api/diagnoses');
+    document.getElementById('navDiagCount').textContent = records.length;
+    if (records.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="table-empty">診断履歴がありません</td></tr>';
+      return;
+    }
+    tbody.innerHTML = records.map(r => `
+      <tr>
+        <td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">${formatDate(r.createdAt)}</td>
+        <td class="table-url"><a href="${esc(r.url)}" target="_blank" style="color:var(--brand-blue);text-decoration:none;">${esc(truncate(r.url, 40))}</a></td>
+        <td style="font-size:12px;">${esc(truncate(r.title, 30) || '-')}</td>
+        <td style="text-align:center;">
+          <span class="table-score" style="color:${getColor(r.totalScore)}">${r.totalScore}</span>
+        </td>
+        <td style="text-align:center;">
+          ${r.hasLead
+            ? '<span style="color:var(--green);font-weight:700;">&#9679; あり</span>'
+            : '<span style="color:var(--text-muted);">—</span>'}
+        </td>
+      </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="5" class="table-empty">読み込みに失敗しました</td></tr>';
+  }
 }
 
 /* ── OPEN DETAIL ──────────────────────────────────────────────── */

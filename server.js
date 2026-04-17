@@ -552,13 +552,16 @@ app.post('/api/analyze', async (req, res) => {
     // Increment diagnosis counter
     incrementDiagnoses();
 
+    // Save diagnosis record for marketing DB
+    const findings = { meta, schema, headings, images, responsive, css, cta, perf, cssFiles: cssResult.files };
+    saveDiagnosisRecord(finalUrl || url, scores, findings);
+
     res.json({
       ok: true,
       url: finalUrl || url,
       fetchTime,
       scores,
-      findings: { meta, schema, headings, images, responsive, css, cta, perf,
-                  cssFiles: cssResult.files },
+      findings,
     });
 
   } catch (err) {
@@ -620,6 +623,13 @@ app.post('/api/leads', (req, res) => {
   const leads = readLeads();
   leads.unshift(lead);
   writeLeads(leads);
+
+  // Mark matching diagnosis record as having a lead
+  if (lead.url) {
+    const diags = readDiagnoses();
+    const match = diags.find(d => d.url === lead.url);
+    if (match) { match.hasLead = true; fs.writeFileSync(DIAG_FILE, JSON.stringify(diags, null, 2), 'utf-8'); }
+  }
 
   res.json({ ok: true, id: lead.id });
 });
@@ -771,6 +781,59 @@ app.get('/api/csv/scores', (req, res) => {
   const bom = '\uFEFF';
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="scores.csv"');
+  res.send(bom + header + '\n' + rows.join('\n'));
+});
+
+/* ════════════════════════════════════════════════════════════════
+   DIAGNOSIS RECORDS (all URL analyses, regardless of form submission)
+════════════════════════════════════════════════════════════════ */
+
+const DIAG_FILE = path.join(LEADS_DIR, 'diagnoses.json');
+if (!fs.existsSync(DIAG_FILE)) fs.writeFileSync(DIAG_FILE, '[]', 'utf-8');
+
+function readDiagnoses() {
+  try { return JSON.parse(fs.readFileSync(DIAG_FILE, 'utf-8')); }
+  catch (_) { return []; }
+}
+
+function saveDiagnosisRecord(url, scores, findings) {
+  const records = readDiagnoses();
+  const total = Math.round((scores.uiux + scores.usability + scores.ia + scores.cta + scores.mobile) / 5);
+  records.unshift({
+    id:         crypto.randomUUID(),
+    createdAt:  new Date().toISOString(),
+    url,
+    totalScore: total,
+    scores,
+    title:      findings.meta?.title || '',
+    hasLead:    false,  // updated when form is submitted
+  });
+  // Keep max 1000 records
+  if (records.length > 1000) records.length = 1000;
+  fs.writeFileSync(DIAG_FILE, JSON.stringify(records, null, 2), 'utf-8');
+}
+
+/* GET /api/diagnoses — list all diagnosis records */
+app.get('/api/diagnoses', (req, res) => {
+  const records = readDiagnoses();
+  res.json(records);
+});
+
+/* GET /api/csv/diagnoses — all diagnoses CSV */
+app.get('/api/csv/diagnoses', (req, res) => {
+  const records = readDiagnoses();
+  const header = '診断日時,URL,サイトタイトル,総合スコア,第一印象,使いやすさ,検索対策,予約導線,スマホ対応,相談申込';
+  const rows = records.map(r => {
+    const s = r.scores || {};
+    return [
+      r.createdAt, r.url, r.title, r.totalScore,
+      s.uiux || '', s.usability || '', s.ia || '', s.cta || '', s.mobile || '',
+      r.hasLead ? 'あり' : 'なし',
+    ].map(csvEscape).join(',');
+  });
+  const bom = '\uFEFF';
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="all_diagnoses.csv"');
   res.send(bom + header + '\n' + rows.join('\n'));
 });
 
