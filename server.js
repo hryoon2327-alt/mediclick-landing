@@ -299,7 +299,7 @@ function analyzeCTA($, html) {
   });
 
   const hasOnlineBooking =
-    /airreserve|reserva\.jp|coubic|clinicforce|eparkbyoin|haisha-navi|epark/i.test(html);
+    /airreserve|reserva\.jp|coubic|clinicforce|eparkbyoin|haisha-navi|epark|line\.me|lin\.ee|dentamap|shika-plus|medicalook|caloo|dent-net|apodent/i.test(html);
 
   return {
     telCount:         telEls.length,
