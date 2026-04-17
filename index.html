@@ -1787,12 +1787,10 @@ function scrollToForm() {
       message:    fd.get('message'),
       department: fd.get('department'),
       url:        document.getElementById('urlInput').value.trim() || '',
-      scores:     lastAnalysis ? null : null,
+      scores:     null,
       findings:   lastAnalysis || null,
     };
-    // Attach scores if we have them
     if (lastAnalysis) {
-      const s = document.getElementById('totalScoreNum').textContent;
       data.scores = {
         uiux:      parseInt(document.getElementById('score1').textContent) || 0,
         usability: parseInt(document.getElementById('score2').textContent) || 0,
