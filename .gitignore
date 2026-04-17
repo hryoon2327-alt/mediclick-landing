@@ -1,3 +1,4 @@
 node_modules/
 data/leads.json
+data/stats.json
 *.log

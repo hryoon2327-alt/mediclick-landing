@@ -650,6 +650,38 @@
     .text-center { text-align: center; }
     .hidden { display: none !important; }
 
+    /* ========== SCORE WARNING ========== */
+    .score-warning-box {
+      display: flex; align-items: flex-start; gap: 14px;
+      border-radius: var(--radius); padding: 20px 24px;
+      margin-bottom: 24px; animation: fadeIn 0.5s ease;
+    }
+    .score-warning-box.level-danger {
+      background: linear-gradient(135deg, #fff5f5, #ffeaea);
+      border: 1px solid #ffcccc; border-left: 4px solid var(--red);
+    }
+    .score-warning-box.level-warning {
+      background: linear-gradient(135deg, #fffcf0, #fff8e0);
+      border: 1px solid #ffe8a0; border-left: 4px solid var(--yellow);
+    }
+    .score-warning-box.level-good {
+      background: linear-gradient(135deg, #f0fff6, #e8faf0);
+      border: 1px solid #b0e8c8; border-left: 4px solid var(--green);
+    }
+    .score-warning-icon { font-size: 28px; flex-shrink: 0; }
+    .score-warning-text { font-size: 14px; line-height: 1.8; color: var(--text-primary); }
+    .score-warning-text strong { font-weight: 900; }
+
+    /* ========== UNLOCKED BADGE ========== */
+    .unlocked-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, #e8f6fd, #d4effa);
+      border: 1px solid var(--brand-blue);
+      border-radius: var(--radius); padding: 12px 18px;
+      font-size: 13px; font-weight: 700; color: var(--brand-blue);
+      margin-bottom: 16px;
+    }
+
     /* ========== RESPONSIVE ========== */
     @media (max-width: 768px) {
       .header { padding: 0 20px; }
@@ -725,6 +757,10 @@
     </div>
 
     <div class="trust-badges">
+      <span class="trust-badge-item" style="font-weight:700; color:var(--brand-blue);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg>
+        <span id="diagCountBadge">累計診断数 読み込み中...</span>
+      </span>
       <span class="trust-badge-item">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg>
         完全無料・登録不要
@@ -877,40 +913,46 @@
       <div class="score-bars">
         <div class="score-bar-item">
           <div class="score-bar-head">
-            <span class="score-bar-name">UI / UX デザイン</span>
+            <span class="score-bar-name">第一印象スコア</span>
             <span class="score-bar-val" id="score1" style="color:var(--yellow)">--</span>
           </div>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar1" style="background:var(--yellow)"></div></div>
         </div>
         <div class="score-bar-item">
           <div class="score-bar-head">
-            <span class="score-bar-name">ユーザビリティ</span>
+            <span class="score-bar-name">使いやすさスコア</span>
             <span class="score-bar-val" id="score2" style="color:var(--red)">--</span>
           </div>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar2" style="background:var(--red)"></div></div>
         </div>
         <div class="score-bar-item">
           <div class="score-bar-head">
-            <span class="score-bar-name">情報設計</span>
+            <span class="score-bar-name">Google検索対策</span>
             <span class="score-bar-val" id="score3" style="color:var(--yellow)">--</span>
           </div>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar3" style="background:var(--yellow)"></div></div>
         </div>
         <div class="score-bar-item">
           <div class="score-bar-head">
-            <span class="score-bar-name">集患導線</span>
+            <span class="score-bar-name">予約のしやすさ</span>
             <span class="score-bar-val" id="score4" style="color:var(--red)">--</span>
           </div>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar4" style="background:var(--red)"></div></div>
         </div>
         <div class="score-bar-item">
           <div class="score-bar-head">
-            <span class="score-bar-name">モバイル対応</span>
+            <span class="score-bar-name">スマホ対応</span>
             <span class="score-bar-val" id="score5" style="color:var(--green)">--</span>
           </div>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar5" style="background:var(--green)"></div></div>
         </div>
       </div>
+    </div>
+
+    <!-- SCORE WARNING MESSAGE -->
+    <div class="score-warning-box" id="scoreWarningBox" style="display:none;">
+      <div class="score-warning-icon" id="scoreWarningIcon"></div>
+      <div class="score-warning-text" id="scoreWarningText"></div>
     </div>
 
     <div class="chart-section">
@@ -947,11 +989,11 @@
 
     <div class="diagnosis-lock-overlay" id="diagnosisLockOverlay">
     <div class="diagnosis-tabs">
-      <button class="diagnosis-tab active" onclick="switchTab(0)">UI/UX</button>
-      <button class="diagnosis-tab" onclick="switchTab(1)">ユーザビリティ</button>
-      <button class="diagnosis-tab" onclick="switchTab(2)">情報設計</button>
-      <button class="diagnosis-tab" onclick="switchTab(3)">集患導線</button>
-      <button class="diagnosis-tab" onclick="switchTab(4)">モバイル</button>
+      <button class="diagnosis-tab active" onclick="switchTab(0)">第一印象</button>
+      <button class="diagnosis-tab" onclick="switchTab(1)">使いやすさ</button>
+      <button class="diagnosis-tab" onclick="switchTab(2)">検索対策</button>
+      <button class="diagnosis-tab" onclick="switchTab(3)">予約導線</button>
+      <button class="diagnosis-tab" onclick="switchTab(4)">スマホ</button>
     </div>
 
     <div class="diagnosis-panel active" id="panel0">
@@ -1133,7 +1175,7 @@
 
     <div class="diagnosis-cta-overlay">
       <h3>詳細な分析結果をご覧になりますか？</h3>
-      <p>各項目の現状・問題点・具体的な改善提案を<br>専門コンサルタントが無料でご説明いたします。</p>
+      <p>各項目の現状・問題点・具体的な改善提案を<br>専門コンサルタントが無料でご説明いたします。<br><strong style="color:var(--brand-blue);">近隣医院との比較データもご用意します。</strong></p>
       <button class="diagnosis-cta-btn" onclick="scrollToForm()">無料で詳細レポートを受け取る →</button>
       <div class="diagnosis-lock-badges">
         <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg> 完全無料</span>
@@ -1159,6 +1201,10 @@
       専任コンサルタントが診断スコアの課題を優先度順に整理し、<br />
       改善にかかる費用・期間・効果の見込みまで丁寧にご説明します。
     </p>
+    <div class="trust-no-push" style="margin-bottom:12px; border-color:rgba(42,172,226,0.4); background:rgba(42,172,226,0.1);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      無料相談では、近隣医院との比較データもお見せします
+    </div>
     <div class="trust-no-push">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       しつこい営業は一切ありません。相談だけでも大歓迎です。
@@ -1423,6 +1469,17 @@ function scrollToForm() {
     if (t >= 50) return { text: '要改善 ★',  color: '#f5a623' };
     return            { text: '要対応 ！',    color: '#e85252' };
   }
+  function getWorstCategory(scores) {
+    const cats = [
+      { name: '第一印象', val: scores.uiux },
+      { name: '使いやすさ', val: scores.usability },
+      { name: 'Google検索対策', val: scores.ia },
+      { name: '予約のしやすさ', val: scores.cta },
+      { name: 'スマホ対応', val: scores.mobile },
+    ];
+    cats.sort((a, b) => a.val - b.val);
+    return cats[0].name;
+  }
   function truncate(str, n) {
     if (!str) return '';
     return str.length > n ? str.slice(0, n) + '…' : str;
@@ -1633,10 +1690,38 @@ function scrollToForm() {
 
     setTimeout(() => document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' }), 150);
     setTimeout(() => drawCharts(scores), 350);
+
+    // Show score warning message
+    const warningBox = document.getElementById('scoreWarningBox');
+    const warningIcon = document.getElementById('scoreWarningIcon');
+    const warningText = document.getElementById('scoreWarningText');
+    warningBox.className = 'score-warning-box';
+    warningBox.style.display = 'flex';
+
+    if (total < 40) {
+      warningBox.classList.add('level-danger');
+      warningIcon.textContent = '\u26A0\uFE0F';
+      warningText.innerHTML = '<strong>ホームページを訪れた患者様の多くが、予約に至らず他院へ流れている可能性があります。</strong><br>特に「' + getWorstCategory(scores) + '」の改善が急務です。早急な対策をお勧めします。';
+    } else if (total < 60) {
+      warningBox.classList.add('level-warning');
+      warningIcon.textContent = '\uD83D\uDCCB';
+      warningText.innerHTML = '<strong>改善により、予約数の増加が期待できる段階です。</strong><br>「' + getWorstCategory(scores) + '」を中心に見直すことで、ホームページ経由の来院数を伸ばせる可能性があります。';
+    } else if (total < 80) {
+      warningBox.classList.add('level-warning');
+      warningIcon.textContent = '\uD83D\uDCA1';
+      warningText.innerHTML = '<strong>あと少しの改善で、近隣医院との差がつく段階です。</strong><br>「' + getWorstCategory(scores) + '」の強化で、さらに多くの患者様に選ばれるホームページになります。';
+    } else {
+      warningBox.classList.add('level-good');
+      warningIcon.textContent = '\u2705';
+      warningText.innerHTML = '<strong>基本的な対策は整っています。</strong><br>さらなる集患強化のために、専門家による詳細分析もご活用ください。';
+    }
+
+    // Unlock the worst-scoring panel (show it without blur)
+    unlockWorstPanel(scores);
   }
 
   function drawCharts(scores) {
-    const labels = ['UI/UX','ユーザビリティ','情報設計','集患導線','モバイル'];
+    const labels = ['第一印象','使いやすさ','検索対策','予約導線','スマホ'];
     const data   = [scores.uiux, scores.usability, scores.ia, scores.cta, scores.mobile];
     const colors = data.map(getColor);
 
@@ -1774,6 +1859,42 @@ function scrollToForm() {
     document.querySelectorAll('.diagnosis-panel').forEach((p,i) => p.classList.toggle('active', i===idx));
   }
 
+  /* ── UNLOCK WORST PANEL ────────────────────────────────────── */
+  function unlockWorstPanel(scores) {
+    const vals = [scores.uiux, scores.usability, scores.ia, scores.cta, scores.mobile];
+    const worstIdx = vals.indexOf(Math.min(...vals));
+
+    // Switch to worst tab
+    switchTab(worstIdx);
+
+    // Move the worst panel outside the blur overlay
+    const overlay = document.getElementById('diagnosisLockOverlay');
+    const panel = document.getElementById('panel' + worstIdx);
+    const tab = document.querySelectorAll('.diagnosis-tab')[worstIdx];
+
+    // Create an "unlocked" section before the locked overlay
+    let unlockedSection = document.getElementById('unlockedDiagSection');
+    if (!unlockedSection) {
+      unlockedSection = document.createElement('div');
+      unlockedSection.id = 'unlockedDiagSection';
+      unlockedSection.innerHTML = '<div class="unlocked-badge"><span>\uD83D\uDD13</span> 最も改善が必要な項目をお見せします</div>';
+      overlay.parentNode.insertBefore(unlockedSection, overlay);
+    }
+
+    // Clone the panel and show it unlocked
+    const clone = panel.cloneNode(true);
+    clone.classList.add('active');
+    clone.style.display = 'block';
+    clone.id = 'unlockedPanel';
+    unlockedSection.appendChild(clone);
+
+    // Update the lock overlay title
+    const lockTitle = document.querySelector('.diagnosis-cta-overlay h3');
+    if (lockTitle) {
+      lockTitle.textContent = '残り4項目の詳細分析もご覧になりますか？';
+    }
+  }
+
   /* ── FORM SUBMIT ──────────────────────────────────────────── */
   async function submitForm(e) {
     e.preventDefault();
@@ -1818,6 +1939,17 @@ function scrollToForm() {
   document.getElementById('urlInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') startDiagnosis();
   });
+
+  // Load diagnosis counter
+  (async function() {
+    try {
+      const res = await fetch('/api/stats');
+      const data = await res.json();
+      document.getElementById('diagCountBadge').textContent = '累計 ' + data.totalDiagnoses + '件 診断済み';
+    } catch(_) {
+      document.getElementById('diagCountBadge').textContent = '累計診断サービス';
+    }
+  })();
 </script>
 </body>
 </html>

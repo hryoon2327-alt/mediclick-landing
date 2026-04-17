@@ -549,6 +549,9 @@ app.post('/api/analyze', async (req, res) => {
     // Step 4 – score
     const scores = calculateScores({ meta, schema, headings, images, responsive, css, cta, perf });
 
+    // Increment diagnosis counter
+    incrementDiagnoses();
+
     res.json({
       ok: true,
       url: finalUrl || url,
@@ -769,6 +772,25 @@ app.get('/api/csv/scores', (req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="scores.csv"');
   res.send(bom + header + '\n' + rows.join('\n'));
+});
+
+/* GET /api/stats — diagnosis counter */
+const STATS_FILE = path.join(LEADS_DIR, 'stats.json');
+if (!fs.existsSync(STATS_FILE)) fs.writeFileSync(STATS_FILE, '{"totalDiagnoses":0}', 'utf-8');
+
+function readStats() {
+  try { return JSON.parse(fs.readFileSync(STATS_FILE, 'utf-8')); }
+  catch (_) { return { totalDiagnoses: 0 }; }
+}
+function incrementDiagnoses() {
+  const stats = readStats();
+  stats.totalDiagnoses++;
+  fs.writeFileSync(STATS_FILE, JSON.stringify(stats), 'utf-8');
+  return stats;
+}
+
+app.get('/api/stats', (req, res) => {
+  res.json(readStats());
 });
 
 /* POST /api/analyze-only — run analysis without saving lead (for dashboard re-analyze) */
