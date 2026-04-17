@@ -154,6 +154,22 @@
     .trust-badge-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
     .trust-badge-item svg { color: var(--green); }
 
+    /* ========== DIAG COUNTER BANNER ========== */
+    .diag-counter-banner {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.9); border: 2px solid var(--brand-blue);
+      border-radius: 100px; padding: 10px 28px;
+      margin-top: 20px; margin-bottom: 8px;
+      box-shadow: 0 4px 16px rgba(42,172,226,0.15);
+    }
+    .diag-counter-num {
+      font-size: 22px; font-weight: 900; color: var(--brand-blue);
+      min-width: 40px; text-align: center;
+    }
+    .diag-counter-label {
+      font-size: 13px; font-weight: 700; color: var(--text-secondary);
+    }
+
     /* ========== PROBLEM SECTION ========== */
     .section { padding: 80px 40px; }
     .section-inner { max-width: 960px; margin: 0 auto; }
@@ -423,6 +439,14 @@
     .service-item-icon { font-size: 22px; margin-bottom: 10px; }
     .service-item-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--brand-blue); }
     .service-item-desc { font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.7; }
+
+    .conversion-point {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 100px; padding: 10px 20px;
+      font-size: 14px; font-weight: 700; color: #fff;
+    }
+    .conversion-point-icon { font-size: 18px; }
 
     /* ========== BEFORE/AFTER ========== */
     .ba-section { background: var(--bg-light); padding: 80px 40px; }
@@ -713,6 +737,52 @@
       .ba-section { padding: 60px 20px; }
       .form-section { padding: 60px 20px; }
       .cta-banner { padding: 48px 20px; }
+
+      /* Result page mobile */
+      .score-overview { grid-template-columns: 1fr; text-align: center; padding: 20px; }
+      .total-score-ring { width: 130px; height: 130px; margin: 0 auto 12px; }
+      .total-score-inner { width: 105px; height: 105px; }
+      .total-score-num { font-size: 38px; }
+      .score-bars { gap: 12px; }
+      .score-bar-name { font-size: 12px; }
+
+      .score-warning-box { flex-direction: column; text-align: center; padding: 16px; }
+      .score-warning-icon { font-size: 24px; }
+      .score-warning-text { font-size: 13px; }
+
+      .chart-section { grid-template-columns: 1fr; gap: 16px; }
+      .chart-wrap { height: 200px; }
+      .chart-card { padding: 16px; }
+
+      .findings-card { padding: 16px; }
+      .findings-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .finding-item { padding: 8px 10px; }
+
+      .diagnosis-cta-overlay { padding: 24px 16px; }
+      .diagnosis-cta-overlay h3 { font-size: 17px; }
+      .diagnosis-cta-btn { font-size: 14px; padding: 14px 28px; }
+      .diagnosis-lock-badges { gap: 12px; }
+
+      .unlocked-badge { font-size: 12px; padding: 10px 14px; }
+
+      .conversion-section { padding: 48px 16px; }
+      .conversion-title { font-size: 20px !important; }
+      .conversion-point { font-size: 12px; padding: 8px 14px; }
+      .cta-btn-primary { font-size: 15px !important; padding: 16px 32px !important; width: 100%; }
+
+      .diag-counter-banner { padding: 8px 20px; margin-top: 16px; }
+      .diag-counter-num { font-size: 18px; }
+      .diag-counter-label { font-size: 12px; }
+
+      .url-form { padding: 20px 16px; }
+      .hero-headline { font-size: 22px; }
+
+      .form-card { padding: 24px 16px; }
+      .form-submit { font-size: 15px; padding: 16px; }
+
+      .result-title { font-size: 22px; }
+      .result-url-badge { font-size: 11px; padding: 6px 14px; }
+      .disclaimer-banner { font-size: 10px; }
     }
   </style>
 </head>
@@ -756,11 +826,12 @@
       <p class="url-note">※ 個人情報の入力は不要です。診断は完全無料です。</p>
     </div>
 
+    <div class="diag-counter-banner" id="diagCounterBanner">
+      <div class="diag-counter-num" id="diagCountBadge">-</div>
+      <div class="diag-counter-label">医院の診断を実施</div>
+    </div>
+
     <div class="trust-badges">
-      <span class="trust-badge-item" style="font-weight:700; color:var(--brand-blue);">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg>
-        <span id="diagCountBadge">累計診断数 読み込み中...</span>
-      </span>
       <span class="trust-badge-item">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg>
         完全無料・登録不要
@@ -1190,52 +1261,42 @@
 <!-- CONVERSION SECTION -->
 <section class="conversion-section" id="conversionSection" style="display:none">
   <div class="conversion-inner">
-    <div class="conversion-warning">
-      <p>診断で課題が見つかりました。<br />放置するほど、近隣医院との差は広がります。</p>
-    </div>
-    <h2 class="conversion-title">
-      この診断結果をもとに、<br />
-      <em>具体的な改善プラン</em>をご提案します。
+    <h2 class="conversion-title" style="margin-bottom:24px;">
+      この診断結果をもとに<br /><em>貴院専用の改善プラン</em>を無料でご提案
     </h2>
-    <p class="conversion-desc">
-      専任コンサルタントが診断スコアの課題を優先度順に整理し、<br />
-      改善にかかる費用・期間・効果の見込みまで丁寧にご説明します。
-    </p>
-    <div class="trust-no-push" style="margin-bottom:12px; border-color:rgba(42,172,226,0.4); background:rgba(42,172,226,0.1);">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      無料相談では、近隣医院との比較データもお見せします
-    </div>
-    <div class="trust-no-push">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      しつこい営業は一切ありません。相談だけでも大歓迎です。
-    </div>
 
-    <div class="service-list">
-      <div class="service-item">
-        <div class="service-item-icon">🌐</div>
-        <div class="service-item-title">医院ホームページ制作</div>
-        <div class="service-item-desc">患者様の視点で設計した、集患特化の医療機関向けサイト制作。デザインから公開・運用まで一貫対応します。</div>
+    <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:32px;">
+      <div class="conversion-point">
+        <span class="conversion-point-icon">📊</span>
+        <span>近隣医院との比較データ</span>
       </div>
-      <div class="service-item">
-        <div class="service-item-icon">📈</div>
-        <div class="service-item-title">集患マーケティング支援</div>
-        <div class="service-item-desc">「選ばれる医院」に変えるための戦略設計。地域患者へのアプローチを最適化し、来院数の継続的な向上をサポートします。</div>
+      <div class="conversion-point">
+        <span class="conversion-point-icon">📋</span>
+        <span>優先改善リスト</span>
       </div>
-      <div class="service-item">
-        <div class="service-item-icon">🗺️</div>
-        <div class="service-item-title">MEO対策（地図検索対策）</div>
-        <div class="service-item-desc">Googleマップで「地域名＋診療科」に上位表示。近隣患者から見つけてもらえる医院へ。</div>
-      </div>
-      <div class="service-item">
-        <div class="service-item-icon">🎯</div>
-        <div class="service-item-title">Web広告運用</div>
-        <div class="service-item-desc">無駄なコストをかけず、来院につながる広告を。リスティング・ディスプレイ広告の戦略立案から運用まで一括対応します。</div>
+      <div class="conversion-point">
+        <span class="conversion-point-icon">💰</span>
+        <span>改善費用・期間の目安</span>
       </div>
     </div>
 
-    <div class="cta-btn-group" style="justify-content:center">
-      <button class="cta-btn-primary" onclick="scrollToForm()">無料相談を予約する</button>
-      <button class="cta-btn-secondary" onclick="scrollToForm()">改善提案書を受け取る</button>
+    <div class="cta-btn-group" style="justify-content:center; margin-bottom:24px;">
+      <button class="cta-btn-primary" onclick="scrollToForm()" style="font-size:18px; padding:20px 48px;">無料相談を予約する →</button>
+    </div>
+
+    <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
+      <span style="font-size:13px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        しつこい営業なし
+      </span>
+      <span style="font-size:13px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>
+        完全無料
+      </span>
+      <span style="font-size:13px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>
+        1〜2営業日以内にご連絡
+      </span>
     </div>
   </div>
 </section>
@@ -1688,6 +1749,12 @@ function scrollToForm() {
     document.getElementById('diagnosisSection').style.display = 'block';
     document.getElementById('conversionSection').style.display = 'block';
 
+    // Hide pre-diagnosis sections (they're irrelevant after results)
+    document.querySelector('.problem-section').style.display = 'none';
+    document.querySelector('.how-section').style.display = 'none';
+    document.querySelector('.ba-section').style.display = 'none';
+    document.querySelector('.cta-banner').style.display = 'none';
+
     setTimeout(() => document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' }), 150);
     setTimeout(() => drawCharts(scores), 350);
 
@@ -1945,9 +2012,10 @@ function scrollToForm() {
     try {
       const res = await fetch('/api/stats');
       const data = await res.json();
-      document.getElementById('diagCountBadge').textContent = '累計 ' + data.totalDiagnoses + '件 診断済み';
+      const count = data.totalDiagnoses || 0;
+      document.getElementById('diagCountBadge').textContent = count + '件';
     } catch(_) {
-      document.getElementById('diagCountBadge').textContent = '累計診断サービス';
+      document.getElementById('diagCounterBanner').style.display = 'none';
     }
   })();
 </script>
