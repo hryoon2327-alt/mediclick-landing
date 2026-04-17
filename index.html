@@ -254,7 +254,7 @@
     /* ========== RESULT DASHBOARD ========== */
     .result-section { display: none; background: var(--bg-light); padding: 60px 40px; }
     .result-section.active { display: block; }
-    .result-inner { max-width: 960px; margin: 0 auto; }
+    .result-inner { max-width: 960px; margin: 0 auto; overflow: hidden; }
 
     .result-header { text-align: center; margin-bottom: 40px; }
     .result-url-badge {
@@ -301,7 +301,7 @@
     .score-bar-fill { height: 100%; border-radius: 4px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); width: 0%; }
 
     .chart-section {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px;
     }
     .chart-card {
       background: #fff; border-radius: var(--radius); padding: 28px;
@@ -1006,14 +1006,14 @@
       <div class="score-bars">
         <div class="score-bar-item">
           <div class="score-bar-head">
-            <span class="score-bar-name">第一印象スコア</span>
+            <span class="score-bar-name">第一印象</span>
             <span class="score-bar-val" id="score1" style="color:var(--yellow)">--</span>
           </div>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar1" style="background:var(--yellow)"></div></div>
         </div>
         <div class="score-bar-item">
           <div class="score-bar-head">
-            <span class="score-bar-name">使いやすさスコア</span>
+            <span class="score-bar-name">使いやすさ</span>
             <span class="score-bar-val" id="score2" style="color:var(--red)">--</span>
           </div>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar2" style="background:var(--red)"></div></div>
