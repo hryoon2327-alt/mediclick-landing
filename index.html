@@ -389,21 +389,15 @@
       font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px;
     }
     .competitor-badge {
-      display: inline-flex; align-items: center; gap: 10px;
-      background: linear-gradient(135deg, #e8f6fd, #d0edf8);
-      border: 2px solid var(--brand-blue);
-      border-radius: var(--radius); padding: 14px 24px;
-      margin: 16px 0 20px; font-size: 15px; font-weight: 700;
-      color: var(--brand-navy);
-      box-shadow: 0 4px 12px rgba(42,172,226,0.15);
-      animation: competitorPulse 2.5s ease-in-out infinite;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent;
+      border: 1px dashed var(--text-muted);
+      border-radius: 100px; padding: 8px 18px;
+      margin: 12px 0 20px; font-size: 12px; font-weight: 500;
+      color: var(--text-secondary);
     }
-    .competitor-badge strong { color: var(--brand-blue); }
-    .competitor-badge-icon { font-size: 20px; }
-    @keyframes competitorPulse {
-      0%, 100% { box-shadow: 0 4px 12px rgba(42,172,226,0.15); }
-      50%      { box-shadow: 0 6px 20px rgba(42,172,226,0.3); }
-    }
+    .competitor-badge strong { color: var(--text-primary); font-weight: 700; }
+    .competitor-badge-icon { font-size: 14px; }
 
     .diag-card { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; }
     .diag-card-head {
