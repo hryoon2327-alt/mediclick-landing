@@ -667,6 +667,18 @@ app.patch('/api/leads/:id', (req, res) => {
   if (notes !== undefined) leads[idx].notes = notes;
   writeLeads(leads);
 
+  // Sync salesStatus to diagnosis records with same URL
+  if (status && leads[idx].url) {
+    const statusMap = { new: '未対応', contacted: '相談中', contracted: '契約中', lost: '失注' };
+    const salesStatus = statusMap[status];
+    if (salesStatus) {
+      const diags = readDiagnoses();
+      let updated = false;
+      diags.forEach(d => { if (d.url === leads[idx].url) { d.salesStatus = salesStatus; updated = true; } });
+      if (updated) fs.writeFileSync(DIAG_FILE, JSON.stringify(diags, null, 2), 'utf-8');
+    }
+  }
+
   res.json({ ok: true });
 });
 
@@ -830,6 +842,17 @@ app.patch('/api/diagnoses/status', (req, res) => {
     if (r.url === url) { r.salesStatus = salesStatus; updated++; }
   });
   if (updated > 0) fs.writeFileSync(DIAG_FILE, JSON.stringify(records, null, 2), 'utf-8');
+
+  // Sync to matching leads
+  const statusMap = { '未対応': 'new', '相談中': 'contacted', '契約中': 'contracted', '解約': 'lost', '失注': 'lost' };
+  const leadStatus = statusMap[salesStatus];
+  if (leadStatus) {
+    const leads = readLeads();
+    let leadUpdated = false;
+    leads.forEach(l => { if (l.url === url) { l.status = leadStatus; leadUpdated = true; } });
+    if (leadUpdated) writeLeads(leads);
+  }
+
   res.json({ ok: true, updated });
 });
 
