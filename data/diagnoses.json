@@ -1,5 +1,101 @@
 [
   {
+    "id": "72446de7-1d59-4079-8050-2fccb6998a84",
+    "createdAt": "2026-04-17T06:15:15.744Z",
+    "url": "https://www.sakura-dental.jp/",
+    "totalScore": 54,
+    "scores": {
+      "uiux": 56,
+      "usability": 64,
+      "ia": 47,
+      "cta": 52,
+      "mobile": 50
+    },
+    "title": "雑色駅徒歩1分の歯科・歯医者【さくらデンタルクリニック】",
+    "hasLead": false,
+    "salesStatus": "未対応"
+  },
+  {
+    "id": "7f09a6b7-5f82-4d7c-882d-6df109686b71",
+    "createdAt": "2026-04-17T06:15:14.330Z",
+    "url": "https://aina-dental.com/",
+    "totalScore": 46,
+    "scores": {
+      "uiux": 62,
+      "usability": 58,
+      "ia": 26,
+      "cta": 52,
+      "mobile": 33
+    },
+    "title": "Dr.AINA DENTAL CLINIC｜名古屋市中区栄のデンタルクリニック",
+    "hasLead": false,
+    "salesStatus": "未対応"
+  },
+  {
+    "id": "be17c085-a4de-4534-8f08-fc2fbb247724",
+    "createdAt": "2026-04-17T06:15:13.899Z",
+    "url": "https://www.skin-lab.net/mole.html",
+    "totalScore": 48,
+    "scores": {
+      "uiux": 60,
+      "usability": 59,
+      "ia": 18,
+      "cta": 62,
+      "mobile": 41
+    },
+    "title": "名古屋のほくろ・いぼ除去治療 - さかえクリニック",
+    "hasLead": false,
+    "salesStatus": "未対応"
+  },
+  {
+    "id": "a2c11643-599f-4660-81c5-26e3e3d6fcbb",
+    "createdAt": "2026-04-17T06:05:05.852Z",
+    "url": "https://aina-dental.com/",
+    "totalScore": 64,
+    "scores": {
+      "uiux": 74,
+      "usability": 73,
+      "ia": 59,
+      "cta": 68,
+      "mobile": 46
+    },
+    "title": "Dr.AINA DENTAL CLINIC｜名古屋市中区栄のデンタルクリニック",
+    "hasLead": false,
+    "salesStatus": "未対応"
+  },
+  {
+    "id": "b0ed16a7-6ba9-48dd-9480-8d12d2722c7f",
+    "createdAt": "2026-04-17T06:05:05.355Z",
+    "url": "https://www.skin-lab.net/mole.html",
+    "totalScore": 75,
+    "scores": {
+      "uiux": 92,
+      "usability": 78,
+      "ia": 55,
+      "cta": 86,
+      "mobile": 64
+    },
+    "title": "名古屋のほくろ・いぼ除去治療 - さかえクリニック",
+    "hasLead": false,
+    "salesStatus": "未対応"
+  },
+  {
+    "id": "ec28eda6-dc5e-45bf-82b8-a002981a3f66",
+    "createdAt": "2026-04-17T06:04:47.729Z",
+    "url": "https://www.skin-lab.net/mole.html",
+    "totalScore": 75,
+    "scores": {
+      "uiux": 92,
+      "usability": 78,
+      "ia": 55,
+      "cta": 86,
+      "mobile": 64
+    },
+    "title": "名古屋のほくろ・いぼ除去治療 - さかえクリニック",
+    "hasLead": false,
+    "salesStatus": "未対応"
+  },
+  {
     "id": "a482494e-1f69-45d1-90bb-72a208198f98",
     "createdAt": "2026-04-17T05:00:30.464Z",
     "url": "https://www.sakura-dental.jp/",

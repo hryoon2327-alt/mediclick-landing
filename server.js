@@ -326,8 +326,41 @@ function analyzePerformance(html, fetchTime) {
   };
 }
 
+function analyzeModernity($, html, externalCSS) {
+  const allCss = (externalCSS || '') + '\n' + html;
+  const hasHeroVideo = $('video').length > 0 ||
+    $('iframe[src*="youtube"], iframe[src*="vimeo"]').length > 0;
+  const hasFixedHeader = /position\s*:\s*(fixed|sticky)/i.test(allCss) &&
+    ($('header').length > 0 || $('.header, #header, .navbar, .nav').length > 0);
+  const inlineStyleCount = $('[style]').toArray().length;
+  const totalElements = $('*').length || 1;
+  const inlineStyleRatio = Math.round((inlineStyleCount / totalElements) * 100);
+  const hasTableLayout = $('table').toArray().filter(el => {
+    const w = $(el).attr('width'); return w && parseInt(w) > 500;
+  }).length > 0 || /\<table[^>]*(?:width=["']\d{3,}|cellpadding|cellspacing)/i.test(html);
+  const textContent = $('body').text().replace(/\s+/g, ' ').trim();
+  const textDensity = Math.round((textContent.length / (html.length || 1)) * 100);
+  const imgCount = $('img').length;
+  const internalLinks = $('a[href]').toArray().filter(el => {
+    const href = $(el).attr('href') || '';
+    return !href.startsWith('http') && !href.startsWith('tel:') && !href.startsWith('mailto:') && !href.startsWith('#') && href.length > 1;
+  }).length;
+  const ctaButtons = $('a, button').toArray().filter(el => {
+    const cls = ($(el).attr('class') || '').toLowerCase();
+    const text = $(el).text().trim();
+    return cls.includes('btn') || cls.includes('button') || cls.includes('cta') ||
+      /予約|問い合わせ|contact|reserve|申し込み/i.test(text);
+  }).length;
+  const hasAnimations = /animation|transition|@keyframes/i.test(allCss);
+  const hasWebP = /\.webp/i.test(html);
+  const hasSvg = $('svg').length > 0 || /\.svg/i.test(html);
+  return { hasHeroVideo, hasFixedHeader, inlineStyleRatio, hasTableLayout,
+    textDensity, textLength: textContent.length, imgCount, internalLinks,
+    ctaButtons, hasAnimations, hasWebP, hasSvg };
+}
+
 /* ════════════════════════════════════════════════════════════════
-   SCORE CALCULATOR  v2  – calibrated against real clinic sites
+   SCORE CALCULATOR  v3  – calibrated for Mediclick standards
    Design goals:
      - Average clinic site  → 35–58 overall
      - Well-optimized site  → 60–75 overall
@@ -336,177 +369,134 @@ function analyzePerformance(html, fetchTime) {
    not just "no bonus". Penalties are explicit.
 ════════════════════════════════════════════════════════════════ */
 
-function calculateScores({ meta, schema, headings, images, responsive, css, cta, perf }) {
+function calculateScores({ meta, schema, headings, images, responsive, css, cta, perf, modernity }) {
 
-  /* ── UI/UX ─────────────────────────────────────────────────
-     Evaluates brand expression, SEO metadata, visual quality.
-     Max achievable ≈ 95. Typical good site ≈ 55–70.
-  ────────────────────────────────────────────────────────── */
+  /* ── 第一印象 (UI/UX) ──────────────────────────────────── */
   let uiux = 0;
+  if (meta.title) uiux += 5;
+  if (meta.title && meta.title.length >= 20 && meta.title.length <= 65) uiux += 7;
+  else if (meta.title) uiux += 2;
+  if (meta.desc) uiux += 5;
+  if (meta.desc && meta.desc.length >= 80 && meta.desc.length <= 160) uiux += 7;
+  else if (meta.desc && meta.desc.length >= 50) uiux += 3;
+  if (!meta.desc) uiux -= 5;
+  if (meta.ogTitle) uiux += 5;
+  if (meta.ogImage) uiux += 5;
+  if (meta.ogTitle && meta.ogDesc && meta.ogImage) uiux += 5;
+  if (headings.h1Count === 1) uiux += 8;
+  else if (headings.h1Count > 1) uiux += 2;
+  else uiux -= 8;
+  // Hero video — Mediclick differentiator
+  if (modernity.hasHeroVideo) uiux += 12;
+  else uiux -= 5;
+  // Modern design signals
+  if (modernity.hasAnimations) uiux += 4;
+  if (modernity.hasWebP || modernity.hasSvg) uiux += 3;
+  if (css.hasCssVars) uiux += 3;
+  // Old-fashioned penalties
+  if (modernity.hasTableLayout) uiux -= 10;
+  if (modernity.inlineStyleRatio > 20) uiux -= 8;
+  else if (modernity.inlineStyleRatio > 10) uiux -= 4;
+  // Image alt
+  uiux += Math.round(8 * (images.altRatio / 100));
+  if (images.total >= 3 && images.altRatio === 0) uiux -= 6;
 
-  // Title
-  if (meta.title) uiux += 8;
-  if (meta.title && meta.title.length >= 20 && meta.title.length <= 65) uiux += 6;
-  else if (meta.title) uiux += 2;   // too short or too long
-
-  // Meta description
-  if (meta.desc) uiux += 10;
-  if (meta.desc && meta.desc.length >= 80 && meta.desc.length <= 160) uiux += 8;
-  else if (meta.desc && meta.desc.length >= 50) uiux += 2; // too short
-  // PENALTY: no description at all
-  if (!meta.desc) uiux -= 4;
-
-  // OGP
-  if (meta.ogTitle) uiux += 7;
-  if (meta.ogImage) uiux += 10;  // critical for SNS sharing
-  if (meta.ogDesc)  uiux += 4;
-  if (meta.ogTitle && meta.ogDesc && meta.ogImage) uiux += 4; // full OGP bonus
-
-  // Images & alt text
-  if (images.total > 0) uiux += 4;
-  uiux += Math.round(12 * (images.altRatio / 100)); // 0–12 pts based on actual ratio
-  // PENALTY: images exist but zero alt tags
-  if (images.total >= 3 && images.altRatio === 0) uiux -= 8;
-
-  // H1 structure (critical for page identity)
-  if (headings.h1Count === 1)      uiux += 12; // ideal
-  else if (headings.h1Count > 1)   uiux += 3;  // multiple H1 = bad practice
-  else                              uiux -= 10; // PENALTY: no H1
-
-  // Basic hygiene
-  if (meta.charset) uiux += 3;
-  if (meta.title && meta.desc) uiux += 4; // both present = SEO baseline OK
-
-  /* ── Usability ──────────────────────────────────────────────
-     Evaluates how easily visitors can navigate and use the site.
-     Max achievable ≈ 95. Typical good site ≈ 45–65.
-  ────────────────────────────────────────────────────────── */
+  /* ── 使いやすさ (Usability) ────────────────────────────── */
   let usability = 0;
-
-  // Viewport / responsive baseline
-  if (responsive.hasViewport)     usability += 12;
-  if (responsive.hasWidthDevice)  usability += 8;
-  if (responsive.hasInitialScale) usability += 5;
-
-  // Heading structure (directly affects navigability)
-  if (headings.h1Count === 1)    usability += 12;
-  else if (headings.h1Count > 1) usability += 3;
-  else                            usability -= 10; // PENALTY: no H1
-  if (headings.h2Count >= 3)     usability += 10;
-  else if (headings.h2Count >= 1) usability += 5;
-
-  // Accessibility: image alt text (heavily weighted)
-  usability += Math.round(20 * (images.altRatio / 100)); // 0–20 pts
-  // PENALTY: zero alt on a content-heavy page
-  if (images.total >= 3 && images.altRatio === 0) usability -= 8;
-
-  // Performance
-  if (perf.fetchTime < 2000)      usability += 12;
-  else if (perf.fetchTime < 4000) usability += 7;
-  else if (perf.fetchTime < 7000) usability += 3;
-  // PENALTY: very slow
-  if (perf.fetchTime >= 7000)     usability -= 5;
-
-  // Page weight
-  if (perf.sizeKB < 100)         usability += 8;
-  else if (perf.sizeKB < 300)    usability += 4;
-  else if (perf.sizeKB > 800)    usability -= 5; // PENALTY: bloated page
-
-  /* ── 情報設計 ──────────────────────────────────────────────
-     Evaluates content architecture, SEO structure, Schema.org.
-     Max achievable ≈ 98. Typical good site ≈ 40–62.
-  ────────────────────────────────────────────────────────── */
-  let ia = 0;
-
-  // Heading hierarchy
-  if (headings.h1Count > 0)      ia += 10;
-  if (headings.h2Count >= 3)     ia += 12;
-  else if (headings.h2Count >= 1) ia += 6;
-  if (headings.h3Count > 0)      ia += 5;
-
-  // Meta quality
-  if (meta.desc)                              ia += 10;
-  if (meta.desc && meta.desc.length >= 80)    ia += 6;
-  if (meta.title && meta.title.length > 15)   ia += 8;
-
-  // Schema.org – most important for local clinic SEO
-  if (schema.count > 0)                        ia += 20;
-  if (schema.hasMedical || schema.hasLocalBiz) ia += 10; // clinic-specific bonus
-  if (schema.hasPhone)                         ia += 5;
-  if (schema.hasHours)                         ia += 5;
-  // PENALTY: no schema at all
-  if (schema.count === 0) ia -= 5;
-
-  // Technical SEO
-  if (meta.canonical) ia += 10;
-  if (!meta.robots || !meta.robots.includes('noindex')) ia += 4;
-
-  // Content richness
-  if (perf.sizeKB > 50) ia += 5;
-
-  /* ── 集患導線 ──────────────────────────────────────────────
-     Evaluates patient acquisition path: phone, booking, hours.
-     Max achievable ≈ 98. Typical good clinic site ≈ 45–70.
-  ────────────────────────────────────────────────────────── */
-  let ctaScore = 0;
-
-  // Phone contact (most critical for clinics)
-  if (cta.telCount > 0)  ctaScore += 22;
-  if (cta.telCount >= 2) ctaScore += 5;  // multiple touchpoints
-  // PENALTY: no phone link at all
-  if (cta.telCount === 0) ctaScore -= 5;
-
-  // Booking / forms
-  if (cta.formCount > 0)        ctaScore += 18;
-  if (cta.hasOnlineBooking)     ctaScore += 8;
-
-  // Keywords on page
-  if (cta.hasBooking)           ctaScore += 12;
-  if (cta.hasContact)           ctaScore += 8;
-  if (cta.hasAccess)            ctaScore += 8;
-  if (cta.hasHours)             ctaScore += 10; // hours = critical for clinics
-  // PENALTY: no hours information
-  if (!cta.hasHours) ctaScore -= 5;
-
-  // CTA link count
-  if (cta.ctaLinkCount >= 3)    ctaScore += 7;
-  else if (cta.ctaLinkCount >= 1) ctaScore += 3;
-
-  /* ── モバイル対応 ────────────────────────────────────────────
-     Now uses REAL CSS data from fetched external stylesheets.
-     Max achievable ≈ 92. Typical modern site ≈ 55–80.
-  ────────────────────────────────────────────────────────── */
-  let mobile = 0;
-
-  // Viewport meta (basic requirement)
-  if (responsive.hasViewport)     mobile += 16;
-  if (responsive.hasWidthDevice)  mobile += 10;
-  if (responsive.hasInitialScale) mobile += 5;
-  // PENALTY: no viewport at all = not responsive
-  if (!responsive.hasViewport)    mobile -= 15;
-
-  // @media queries – graded by count (from real CSS files)
-  if (css.hasMediaQuery) {
-    if      (css.mediaCount >= 10) mobile += 20;
-    else if (css.mediaCount >= 5)  mobile += 16;
-    else if (css.mediaCount >= 2)  mobile += 10;
-    else                           mobile += 5;
-  } else if (responsive.hasMediaQueryHtml) {
-    mobile += 4; // only inline style found
-  } else {
-    mobile -= 10; // PENALTY: no media queries at all
+  if (responsive.hasViewport) usability += 8;
+  if (responsive.hasWidthDevice) usability += 7;
+  if (headings.h1Count === 1) usability += 6;
+  else if (headings.h1Count > 1) usability += 2;
+  else usability -= 8;
+  if (headings.h2Count >= 3 && headings.h2Count <= 8) usability += 6;
+  else if (headings.h2Count >= 1) usability += 3;
+  if (headings.h2Count > 10) usability -= 5;
+  usability += Math.round(12 * (images.altRatio / 100));
+  if (images.total >= 3 && images.altRatio === 0) usability -= 6;
+  if (perf.fetchTime < 2000) usability += 10;
+  else if (perf.fetchTime < 4000) usability += 5;
+  else if (perf.fetchTime < 7000) usability += 2;
+  if (perf.fetchTime >= 7000) usability -= 5;
+  if (perf.sizeKB < 100) usability += 8;
+  else if (perf.sizeKB < 200) usability += 5;
+  else if (perf.sizeKB < 400) usability += 2;
+  if (perf.sizeKB > 500) usability -= 5;
+  // Fixed header
+  if (modernity.hasFixedHeader) usability += 8;
+  else usability -= 3;
+  // Text density
+  if (modernity.textDensity > 40) usability -= 10;
+  else if (modernity.textDensity > 30) usability -= 5;
+  // Cluttered images
+  if (modernity.imgCount > 50) usability -= 5;
+  else if (modernity.imgCount > 30) usability -= 2;
+  // Font size
+  if (css.baseFontSize) {
+    const px = css.baseFontSize.unit === 'px' ? css.baseFontSize.value :
+               css.baseFontSize.unit === 'rem' ? css.baseFontSize.value * 16 : 16;
+    if (px >= 15 && px <= 18) usability += 5;
+    else if (px >= 14) usability += 2;
+    else if (px < 13) usability -= 5;
   }
 
-  // CSS layout quality (from fetched CSS)
-  if (css.hasFlexbox || css.hasGrid) mobile += 10;
-  if (css.hasFlexbox && css.hasGrid) mobile += 4;  // modern layout stack
-  if (css.hasMaxWidth)               mobile += 5;
-  if (css.hasViewportUnits)          mobile += 4;
-  if (css.hasCssVars)                mobile += 3;  // modern CSS indicator
+  /* ── Google検索対策 (情報設計) ──────────────────────────── */
+  let ia = 0;
+  if (headings.h1Count === 1) ia += 8;
+  if (headings.h2Count >= 3 && headings.h2Count <= 8) ia += 7;
+  else if (headings.h2Count >= 1) ia += 4;
+  if (meta.desc) ia += 6;
+  if (meta.desc && meta.desc.length >= 80) ia += 3;
+  if (meta.title && meta.title.length >= 20) ia += 3;
+  if (schema.count > 0) ia += 12;
+  if (schema.hasMedical || schema.hasLocalBiz) ia += 8;
+  if (schema.hasPhone) ia += 3;
+  if (schema.hasHours) ia += 2;
+  if (schema.count === 0) ia -= 8;
+  if (meta.canonical) ia += 7;
+  else ia -= 3;
+  if (!meta.robots || !meta.robots.includes('noindex')) ia += 3;
+  // Page structure
+  if (modernity.internalLinks >= 10) ia += 8;
+  else if (modernity.internalLinks >= 5) ia += 5;
+  else if (modernity.internalLinks >= 2) ia += 2;
+  else ia -= 5;
 
-  // Penalties from CSS analysis
+  /* ── 予約のしやすさ (集患導線) ──────────────────────────── */
+  let ctaScore = 0;
+  if (cta.telCount > 0) ctaScore += 12;
+  if (cta.telCount >= 2) ctaScore += 3;
+  if (cta.telCount === 0) ctaScore -= 8;
+  if (cta.formCount > 0) ctaScore += 10;
+  if (cta.hasOnlineBooking) ctaScore += 8;
+  if (cta.hasBooking) ctaScore += 8;
+  if (cta.hasContact) ctaScore += 4;
+  if (cta.hasAccess) ctaScore += 4;
+  if (cta.hasHours) ctaScore += 6;
+  if (!cta.hasHours) ctaScore -= 5;
+  // CTA button prominence
+  if (modernity.ctaButtons >= 3) ctaScore += 10;
+  else if (modernity.ctaButtons >= 1) ctaScore += 5;
+  else ctaScore -= 5;
+  if (modernity.hasFixedHeader && cta.telCount > 0) ctaScore += 5;
+
+  /* ── スマホ対応 (モバイル) ──────────────────────────────── */
+  let mobile = 0;
+  if (responsive.hasViewport) mobile += 10;
+  if (responsive.hasWidthDevice) mobile += 8;
+  if (!responsive.hasViewport) mobile -= 15;
+  if (css.hasMediaQuery) {
+    if (css.mediaCount >= 8) mobile += 18;
+    else if (css.mediaCount >= 4) mobile += 12;
+    else if (css.mediaCount >= 2) mobile += 8;
+    else mobile += 4;
+  } else { mobile -= 10; }
+  if (css.hasFlexbox || css.hasGrid) mobile += 6;
+  if (css.hasFlexbox && css.hasGrid) mobile += 3;
+  if (css.hasMaxWidth) mobile += 3;
+  if (css.hasViewportUnits) mobile += 3;
+  if (css.hasCssVars) mobile += 2;
   if (responsive.hasFixedWidthTable) mobile -= 10;
-  if (css.hasFixedBody)              mobile -= 8;
+  if (css.hasFixedBody) mobile -= 12;
 
   return {
     uiux:      Math.min(100, Math.max(0, uiux)),
@@ -543,17 +533,18 @@ app.post('/api/analyze', async (req, res) => {
       Promise.resolve(analyzePerformance(html, fetchTime)),
     ]);
 
-    // Step 3 – analyse combined CSS
+    // Step 3 – analyse combined CSS + modernity
     const css = analyzeCSS($, cssResult.combined);
+    const modernity = analyzeModernity($, html, cssResult.combined);
 
     // Step 4 – score
-    const scores = calculateScores({ meta, schema, headings, images, responsive, css, cta, perf });
+    const scores = calculateScores({ meta, schema, headings, images, responsive, css, cta, perf, modernity });
 
     // Increment diagnosis counter
     incrementDiagnoses();
 
     // Save diagnosis record for marketing DB
-    const findings = { meta, schema, headings, images, responsive, css, cta, perf, cssFiles: cssResult.files };
+    const findings = { meta, schema, headings, images, responsive, css, cta, perf, modernity, cssFiles: cssResult.files };
     saveDiagnosisRecord(finalUrl || url, scores, findings);
 
     res.json({
@@ -943,11 +934,12 @@ app.post('/api/analyze-only', async (req, res) => {
       Promise.resolve(analyzePerformance(html, fetchTime)),
     ]);
     const css    = analyzeCSS($, cssResult.combined);
-    const scores = calculateScores({ meta, schema, headings, images, responsive, css, cta, perf });
+    const modernity = analyzeModernity($, html, cssResult.combined);
+    const scores = calculateScores({ meta, schema, headings, images, responsive, css, cta, perf, modernity });
 
     res.json({
       ok: true, url: finalUrl || url, fetchTime, scores,
-      findings: { meta, schema, headings, images, responsive, css, cta, perf, cssFiles: cssResult.files },
+      findings: { meta, schema, headings, images, responsive, css, cta, perf, modernity, cssFiles: cssResult.files },
     });
   } catch (err) {
     res.status(200).json({ ok: false, url, error: err.message });
