@@ -590,6 +590,11 @@ const LEADS_FILE = path.join(LEADS_DIR, 'leads.json');
 if (!fs.existsSync(LEADS_DIR)) fs.mkdirSync(LEADS_DIR, { recursive: true });
 if (!fs.existsSync(LEADS_FILE)) fs.writeFileSync(LEADS_FILE, '[]', 'utf-8');
 
+function normalizeUrl(u) {
+  try { const p = new URL(u); return p.origin + p.pathname.replace(/\/+$/, ''); }
+  catch(_) { return u.replace(/\/+$/, ''); }
+}
+
 function readLeads() {
   try { return JSON.parse(fs.readFileSync(LEADS_FILE, 'utf-8')); }
   catch (_) { return []; }
@@ -627,7 +632,7 @@ app.post('/api/leads', (req, res) => {
   // Mark matching diagnosis record as having a lead
   if (lead.url) {
     const diags = readDiagnoses();
-    const match = diags.find(d => d.url === lead.url);
+    const match = diags.find(d => normalizeUrl(d.url) === normalizeUrl(lead.url));
     if (match) { match.hasLead = true; fs.writeFileSync(DIAG_FILE, JSON.stringify(diags, null, 2), 'utf-8'); }
   }
 
@@ -674,7 +679,7 @@ app.patch('/api/leads/:id', (req, res) => {
     if (salesStatus) {
       const diags = readDiagnoses();
       let updated = false;
-      diags.forEach(d => { if (d.url === leads[idx].url) { d.salesStatus = salesStatus; updated = true; } });
+      diags.forEach(d => { if (normalizeUrl(d.url) === normalizeUrl(leads[idx].url)) { d.salesStatus = salesStatus; updated = true; } });
       if (updated) fs.writeFileSync(DIAG_FILE, JSON.stringify(diags, null, 2), 'utf-8');
     }
   }
@@ -839,7 +844,7 @@ app.patch('/api/diagnoses/status', (req, res) => {
   const records = readDiagnoses();
   let updated = 0;
   records.forEach(r => {
-    if (r.url === url) { r.salesStatus = salesStatus; updated++; }
+    if (normalizeUrl(r.url) === normalizeUrl(url)) { r.salesStatus = salesStatus; updated++; }
   });
   if (updated > 0) fs.writeFileSync(DIAG_FILE, JSON.stringify(records, null, 2), 'utf-8');
 
@@ -849,7 +854,7 @@ app.patch('/api/diagnoses/status', (req, res) => {
   if (leadStatus) {
     const leads = readLeads();
     let leadUpdated = false;
-    leads.forEach(l => { if (l.url === url) { l.status = leadStatus; leadUpdated = true; } });
+    leads.forEach(l => { if (normalizeUrl(l.url) === normalizeUrl(url)) { l.status = leadStatus; leadUpdated = true; } });
     if (leadUpdated) writeLeads(leads);
   }
 

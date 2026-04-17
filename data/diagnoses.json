@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "id": "a482494e-1f69-45d1-90bb-72a208198f98",
+    "createdAt": "2026-04-17T05:00:30.464Z",
+    "url": "https://www.sakura-dental.jp/",
+    "totalScore": 77,
+    "scores": {
+      "uiux": 91,
+      "usability": 80,
+      "ia": 75,
+      "cta": 72,
+      "mobile": 68
+    },
+    "title": "雑色駅徒歩1分の歯科・歯医者【さくらデンタルクリニック】",
+    "hasLead": true,
+    "salesStatus": "契約中"
+  }
+]
