@@ -549,7 +549,20 @@
     }
     .findings-card-title {
       font-size: 14px; font-weight: 700; color: var(--brand-navy);
-      margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+      margin-bottom: 0; display: flex; align-items: center; gap: 8px;
+    }
+    .findings-toggle {
+      cursor: pointer; padding: 4px 0; user-select: none; transition: opacity 0.15s;
+    }
+    .findings-toggle:hover { opacity: 0.7; }
+    .findings-arrow {
+      margin-left: auto; font-size: 12px; color: var(--text-muted);
+      transition: transform 0.3s ease;
+    }
+    .findings-arrow.open { transform: rotate(180deg); }
+    .findings-body {
+      margin-top: 18px;
+      animation: fadeIn 0.3s ease;
     }
     .findings-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;
@@ -1061,15 +1074,18 @@
 
     <!-- DETECTED FINDINGS CARD -->
     <div class="findings-card" id="findingsCard" style="display:none">
-      <div class="findings-card-title">
+      <div class="findings-card-title findings-toggle" onclick="toggleFindings()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-blue)" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         実際に検出された情報
+        <span class="findings-arrow" id="findingsArrow">▼</span>
       </div>
-      <div id="fetchErrorBanner" class="fetch-error-banner" style="display:none">
-        <span>⚠️</span>
-        <span id="fetchErrorText"></span>
+      <div class="findings-body" id="findingsBody" style="display:none;">
+        <div id="fetchErrorBanner" class="fetch-error-banner" style="display:none">
+          <span>⚠️</span>
+          <span id="fetchErrorText"></span>
+        </div>
+        <div class="findings-grid" id="findingsGrid"></div>
       </div>
-      <div class="findings-grid" id="findingsGrid"></div>
     </div>
   </div>
 </section>
@@ -1953,6 +1969,18 @@ function scrollToForm() {
   }
 
   /* ── TAB SWITCHER ─────────────────────────────────────────── */
+  function toggleFindings() {
+    const body  = document.getElementById('findingsBody');
+    const arrow = document.getElementById('findingsArrow');
+    if (body.style.display === 'none') {
+      body.style.display = 'block';
+      arrow.classList.add('open');
+    } else {
+      body.style.display = 'none';
+      arrow.classList.remove('open');
+    }
+  }
+
   function switchTab(idx) {
     document.querySelectorAll('.diagnosis-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
     document.querySelectorAll('.diagnosis-panel').forEach((p,i) => p.classList.toggle('active', i===idx));
