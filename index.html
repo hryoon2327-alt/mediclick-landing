@@ -1991,29 +1991,34 @@ function scrollToForm() {
     const vals = [scores.uiux, scores.usability, scores.ia, scores.cta, scores.mobile];
     const worstIdx = vals.indexOf(Math.min(...vals));
 
-    // Switch to worst tab
-    switchTab(worstIdx);
-
-    // Move the worst panel outside the blur overlay
     const overlay = document.getElementById('diagnosisLockOverlay');
+
+    // Remove previous unlocked section if exists
+    const prev = document.getElementById('unlockedDiagSection');
+    if (prev) prev.remove();
+
+    // Create unlocked section before the locked overlay
+    const unlockedSection = document.createElement('div');
+    unlockedSection.id = 'unlockedDiagSection';
+    unlockedSection.innerHTML = '<div class="unlocked-badge"><span>\uD83D\uDD13</span> 最も改善が必要な項目をお見せします</div>';
+    overlay.parentNode.insertBefore(unlockedSection, overlay);
+
+    // Clone the worst panel and show it unlocked
     const panel = document.getElementById('panel' + worstIdx);
-    const tab = document.querySelectorAll('.diagnosis-tab')[worstIdx];
-
-    // Create an "unlocked" section before the locked overlay
-    let unlockedSection = document.getElementById('unlockedDiagSection');
-    if (!unlockedSection) {
-      unlockedSection = document.createElement('div');
-      unlockedSection.id = 'unlockedDiagSection';
-      unlockedSection.innerHTML = '<div class="unlocked-badge"><span>\uD83D\uDD13</span> 最も改善が必要な項目をお見せします</div>';
-      overlay.parentNode.insertBefore(unlockedSection, overlay);
-    }
-
-    // Clone the panel and show it unlocked
     const clone = panel.cloneNode(true);
     clone.classList.add('active');
     clone.style.display = 'block';
     clone.id = 'unlockedPanel';
     unlockedSection.appendChild(clone);
+
+    // Hide the worst tab in the locked overlay (avoid duplicate)
+    const tabs = overlay.querySelectorAll('.diagnosis-tab');
+    if (tabs[worstIdx]) tabs[worstIdx].style.display = 'none';
+    panel.style.display = 'none';
+
+    // Show a different tab in the blur area
+    const nextTab = worstIdx === 0 ? 1 : 0;
+    switchTab(nextTab);
 
     // Update the lock overlay title
     const lockTitle = document.querySelector('.diagnosis-cta-overlay h3');
