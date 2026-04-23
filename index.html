@@ -292,11 +292,18 @@
     .total-score-num { font-size: 46px; font-weight: 900; line-height: 1; }
     .total-score-label { font-size: 11px; color: var(--text-muted); font-weight: 700; }
     .total-score-grade { font-size: 14px; font-weight: 700; margin-top: 8px; }
+    .total-score-meaning {
+      font-size: 12px; color: var(--text-secondary);
+      margin-top: 8px; line-height: 1.6; max-width: 240px;
+      margin-left: auto; margin-right: auto;
+    }
     .score-bars { flex: 1; display: flex; flex-direction: column; gap: 18px; }
     .score-bar-item { display: flex; flex-direction: column; gap: 6px; }
     .score-bar-head { display: flex; justify-content: space-between; align-items: center; }
     .score-bar-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
     .score-bar-val { font-size: 13px; font-weight: 700; }
+    .score-bar-name-wrap { display: flex; flex-direction: column; gap: 1px; }
+    .score-bar-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; }
     .score-bar-track { height: 8px; background: var(--bg-light); border-radius: 4px; overflow: hidden; }
     .score-bar-fill { height: 100%; border-radius: 4px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); width: 0%; }
 
@@ -457,6 +464,46 @@
       font-size: 14px; font-weight: 700; color: #fff;
     }
     .conversion-point-icon { font-size: 18px; }
+
+    .benefit-list {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px;
+      max-width: 580px; margin: 0 auto 24px;
+    }
+    .benefit-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; color: #fff; font-weight: 500;
+      text-align: left;
+    }
+    .benefit-check {
+      color: #2ecc71; font-weight: 900; font-size: 16px;
+    }
+    .benefit-note { font-size: 11px; color: rgba(255,255,255,0.6); }
+
+    .conversion-dept-note {
+      font-size: 13px; color: rgba(255,255,255,0.75);
+      text-align: center; margin-bottom: 24px; line-height: 1.7;
+    }
+
+    .safety-box {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius);
+      padding: 18px 24px;
+      max-width: 520px; margin: 0 auto 16px;
+    }
+    .safety-box-title {
+      font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6);
+      letter-spacing: 1px; margin-bottom: 10px;
+    }
+    .safety-box-item {
+      font-size: 13px; color: rgba(255,255,255,0.85);
+      line-height: 1.9;
+    }
+
+    .conversion-meta {
+      font-size: 12px; color: rgba(255,255,255,0.55);
+      text-align: center; line-height: 1.7;
+    }
 
     /* ========== BEFORE/AFTER ========== */
     .ba-section { background: var(--bg-light); padding: 80px 40px; }
@@ -758,6 +805,27 @@
       margin-bottom: 16px;
     }
 
+    /* ========== UNLOCKED PANEL ========== */
+    .unlocked-panel {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 24px; box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+    }
+    .unlocked-panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 16px; border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .unlocked-panel-cat { font-size: 16px; font-weight: 700; color: var(--brand-navy); }
+    .unlocked-panel-score { font-size: 22px; font-weight: 900; }
+    .unlocked-panel-row { margin-bottom: 14px; }
+    .unlocked-panel-row:last-child { margin-bottom: 0; }
+    .unlocked-panel-label {
+      font-size: 12px; font-weight: 700; color: var(--brand-blue);
+      margin-bottom: 4px;
+    }
+    .unlocked-panel-text { font-size: 13px; color: var(--text-secondary); line-height: 1.8; }
+
     /* ========== RESPONSIVE ========== */
     @media (max-width: 768px) {
       .header { padding: 0 20px; }
@@ -840,6 +908,18 @@
       .result-title { font-size: 22px; }
       .result-url-badge { font-size: 11px; padding: 6px 14px; }
       .disclaimer-banner { font-size: 10px; }
+
+      .benefit-list { grid-template-columns: 1fr; gap: 10px; max-width: 320px; }
+      .benefit-item { font-size: 13px; }
+      .safety-box { padding: 14px 18px; }
+      .safety-box-item { font-size: 12px; line-height: 1.8; }
+
+      /* Mobile section order: chart after blur CTA */
+      .result-inner { display: flex; flex-direction: column; }
+      .score-overview     { order: 1; }
+      .score-warning-box  { order: 2; }
+      .chart-section      { order: 5; }
+      .findings-card      { order: 6; }
     }
   </style>
 </head>
@@ -852,7 +932,7 @@
       <img src="/img/logo_header.png" alt="Mediclick（メディクリック）" class="logo-img" />
     </a>
   </div>
-  <button class="header-cta" onclick="scrollToForm()">無料相談はこちら</button>
+  <button class="header-cta" onclick="scrollToForm()">相談してみる →</button>
 </header>
 
 <!-- HERO SECTION -->
@@ -1036,40 +1116,56 @@
           </div>
         </div>
         <div class="total-score-grade" id="totalScoreGrade"></div>
+        <div class="total-score-meaning" id="totalScoreMeaning"></div>
       </div>
 
       <div class="score-bars">
         <div class="score-bar-item">
           <div class="score-bar-head">
-            <span class="score-bar-name">第一印象</span>
+            <div class="score-bar-name-wrap">
+              <span class="score-bar-name">第一印象</span>
+              <span class="score-bar-sub">訪問直後の印象・信頼感</span>
+            </div>
             <span class="score-bar-val" id="score1" style="color:var(--yellow)">--</span>
           </div>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar1" style="background:var(--yellow)"></div></div>
         </div>
         <div class="score-bar-item">
           <div class="score-bar-head">
-            <span class="score-bar-name">使いやすさ</span>
+            <div class="score-bar-name-wrap">
+              <span class="score-bar-name">使いやすさ</span>
+              <span class="score-bar-sub">ナビゲーション・読みやすさ</span>
+            </div>
             <span class="score-bar-val" id="score2" style="color:var(--red)">--</span>
           </div>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar2" style="background:var(--red)"></div></div>
         </div>
         <div class="score-bar-item">
           <div class="score-bar-head">
-            <span class="score-bar-name">Google検索対策</span>
+            <div class="score-bar-name-wrap">
+              <span class="score-bar-name">Google検索対策</span>
+              <span class="score-bar-sub">検索からの新規流入のしやすさ</span>
+            </div>
             <span class="score-bar-val" id="score3" style="color:var(--yellow)">--</span>
           </div>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar3" style="background:var(--yellow)"></div></div>
         </div>
         <div class="score-bar-item">
           <div class="score-bar-head">
-            <span class="score-bar-name">予約のしやすさ</span>
+            <div class="score-bar-name-wrap">
+              <span class="score-bar-name">予約のしやすさ</span>
+              <span class="score-bar-sub">ご予約・お問い合わせ動線の明瞭さ</span>
+            </div>
             <span class="score-bar-val" id="score4" style="color:var(--red)">--</span>
           </div>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar4" style="background:var(--red)"></div></div>
         </div>
         <div class="score-bar-item">
           <div class="score-bar-head">
-            <span class="score-bar-name">スマホ対応</span>
+            <div class="score-bar-name-wrap">
+              <span class="score-bar-name">スマホ対応</span>
+              <span class="score-bar-sub">スマートフォン表示の最適化</span>
+            </div>
             <span class="score-bar-val" id="score5" style="color:var(--green)">--</span>
           </div>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar5" style="background:var(--green)"></div></div>
@@ -1305,13 +1401,13 @@
     </div><!-- end diagnosis-lock-overlay -->
 
     <div class="diagnosis-cta-overlay">
-      <h3>詳細な分析結果をご覧になりますか？</h3>
-      <p>各項目の現状・問題点・具体的な改善提案を<br>専門コンサルタントが無料でご説明いたします。</p>
+      <h3>他の4項目では、貴院の集患力を高める具体策を確認できます</h3>
+      <p>各項目について、専門コンサルタントが<br>貴院の状況に合わせた改善方向を無料でご説明します。</p>
       <div class="competitor-badge">
         <span class="competitor-badge-icon">🔍</span>
         <span>無料相談では<strong>近隣医院との比較データ</strong>もお見せします</span>
       </div>
-      <button class="diagnosis-cta-btn" onclick="scrollToForm()">無料で詳細レポートを受け取る →</button>
+      <button class="diagnosis-cta-btn" onclick="scrollToForm()">改善策を確認する →</button>
       <div class="diagnosis-lock-badges">
         <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg> 完全無料</span>
         <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg> 1〜2営業日以内にご連絡</span>
@@ -1325,43 +1421,38 @@
 <!-- CONVERSION SECTION -->
 <section class="conversion-section" id="conversionSection" style="display:none">
   <div class="conversion-inner">
-    <h2 class="conversion-title" style="margin-bottom:24px;">
-      この診断結果をもとに<br /><em>貴院専用の改善プラン</em>を無料でご提案
+    <h2 class="conversion-title">
+      診断結果をもとに、<br>
+      <em>貴院専用の改善プラン</em>を無料でご提案いたします
     </h2>
 
-    <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:32px;">
-      <div class="conversion-point">
-        <span class="conversion-point-icon">📊</span>
-        <span>近隣医院との比較データ</span>
-      </div>
-      <div class="conversion-point">
-        <span class="conversion-point-icon">📋</span>
-        <span>優先改善リスト</span>
-      </div>
-      <div class="conversion-point">
-        <span class="conversion-point-icon">💰</span>
-        <span>改善費用・期間の目安</span>
-      </div>
+    <div class="benefit-list">
+      <div class="benefit-item"><span class="benefit-check">✓</span>改善優先順位リスト</div>
+      <div class="benefit-item"><span class="benefit-check">✓</span>近隣医院との比較情報</div>
+      <div class="benefit-item"><span class="benefit-check">✓</span>改善後の集患イメージ <span class="benefit-note">（参考値）</span></div>
+      <div class="benefit-item"><span class="benefit-check">✓</span>概算費用・期間の目安</div>
     </div>
+
+    <p class="conversion-dept-note">
+      歯科 / 内科 / 美容医療 など、<br>
+      診療科を問わず、貴院の状況に合わせたご提案を行います。
+    </p>
 
     <div class="cta-btn-group" style="justify-content:center; margin-bottom:24px;">
-      <button class="cta-btn-primary" onclick="scrollToForm()" style="font-size:18px; padding:20px 48px;">無料相談を予約する →</button>
+      <button class="cta-btn-primary" onclick="scrollToForm()" style="font-size:18px; padding:20px 48px;">無料で相談する →</button>
     </div>
 
-    <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
-      <span style="font-size:13px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        しつこい営業なし
-      </span>
-      <span style="font-size:13px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>
-        完全無料
-      </span>
-      <span style="font-size:13px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>
-        1〜2営業日以内にご連絡
-      </span>
+    <div class="safety-box">
+      <div class="safety-box-title">ご相談にあたってのお約束</div>
+      <div class="safety-box-item">✓ ご相談後の継続的な営業電話は一切いたしません</div>
+      <div class="safety-box-item">✓ メールマガジン等への自動登録もございません</div>
+      <div class="safety-box-item">✓ ご相談のみで終了いただくことも歓迎です</div>
     </div>
+
+    <p class="conversion-meta">
+      現在、お申込みが集中しております<br>
+      通常1〜2営業日以内にご連絡いたします
+    </p>
   </div>
 </section>
 
@@ -1520,7 +1611,7 @@
         </div>
 
         <button type="submit" class="form-submit">
-          無料相談・レポートを申し込む →
+          無料相談を申し込む →
         </button>
       </form>
 
@@ -1848,6 +1939,14 @@ function scrollToForm() {
     document.getElementById('totalScoreGrade').textContent = grade.text;
     document.getElementById('totalScoreGrade').style.color = grade.color;
 
+    const meaningEl = document.getElementById('totalScoreMeaning');
+    if (meaningEl) {
+      if (total < 40)        meaningEl.textContent = 'ホームページからのご予約・お問い合わせの機会に大きな改善余地が見られる状態です';
+      else if (total < 60)   meaningEl.textContent = 'ホームページからのご予約・お問い合わせの機会に改善の余地が見られる状態です';
+      else if (total < 80)   meaningEl.textContent = 'さらなる強化で他院との差別化が期待できる状態です';
+      else                   meaningEl.textContent = '基本的な対策が整っている状態です';
+    }
+
     const bars = [
       { s:'score1', b:'bar1', v:scores.uiux },
       { s:'score2', b:'bar2', v:scores.usability },
@@ -1889,22 +1988,33 @@ function scrollToForm() {
     warningBox.className = 'score-warning-box';
     warningBox.style.display = 'flex';
 
+    const worstCat = getWorstCategory(scores);
     if (total < 40) {
       warningBox.classList.add('level-danger');
       warningIcon.textContent = '\u26A0\uFE0F';
-      warningText.innerHTML = '<strong>ホームページを訪れた患者様の多くが、予約に至らず他院へ流れている可能性があります。</strong><br>特に「' + getWorstCategory(scores) + '」の改善が急務です。早急な対策をお勧めします。';
+      warningText.innerHTML =
+        '<strong>現状、ホームページからのご予約やお問い合わせにつながりにくい状態が見られます。</strong><br>' +
+        '特に「' + worstCat + '」が、改善優先度の高い項目として検出されました。<br>' +
+        '一般的な医療機関の水準は50〜65点前後とされており、優先的な対策をご検討いただくことをおすすめします。';
     } else if (total < 60) {
       warningBox.classList.add('level-warning');
       warningIcon.textContent = '\uD83D\uDCCB';
-      warningText.innerHTML = '<strong>改善により、予約数の増加が期待できる段階です。</strong><br>「' + getWorstCategory(scores) + '」を中心に見直すことで、ホームページ経由の来院数を伸ばせる可能性があります。';
+      warningText.innerHTML =
+        '<strong>整備により、ご予約・お問い合わせ数の向上が期待できる段階です。</strong><br>' +
+        '「' + worstCat + '」を中心に整えることで、ホームページ経由でのご来院機会が広がる可能性があります。<br>' +
+        '一般的に基本対策で <strong>+15〜25点程度</strong> の改善が見込まれます（参考値）。';
     } else if (total < 80) {
       warningBox.classList.add('level-warning');
       warningIcon.textContent = '\uD83D\uDCA1';
-      warningText.innerHTML = '<strong>あと少しの改善で、近隣医院との差がつく段階です。</strong><br>「' + getWorstCategory(scores) + '」の強化で、さらに多くの患者様に選ばれるホームページになります。';
+      warningText.innerHTML =
+        '<strong>基本的な対策は整っており、さらなる強化で大きな差別化が期待できる段階です。</strong><br>' +
+        '「' + worstCat + '」を最適化することで、選ばれる医院としての印象をより高められます。';
     } else {
       warningBox.classList.add('level-good');
       warningIcon.textContent = '\u2705';
-      warningText.innerHTML = '<strong>基本的な対策は整っています。</strong><br>さらなる集患強化のために、専門家による詳細分析もご活用ください。';
+      warningText.innerHTML =
+        '<strong>基本対策は十分に整っています。</strong><br>' +
+        'さらなる集患力の強化をご検討の際は、専門家による詳細分析もぜひご活用ください。';
     }
 
     // Unlock the worst-scoring panel (show it without blur)
@@ -2075,9 +2185,45 @@ function scrollToForm() {
   }
 
   /* ── UNLOCK WORST PANEL ────────────────────────────────────── */
+  const UNLOCKED_CONTENT = {
+    0: {
+      name: '第一印象',
+      current: 'メタ情報やOGP設定、画像のalt属性などの基本的なSEO要素に整備の余地が見られます。',
+      impact: '検索結果やSNSシェア時の表示に影響し、最初の信頼形成の機会が損なわれている可能性があります。',
+      hint: 'タイトル・ディスクリプション・OGP画像の整備、画像alt属性の追加、視覚的な信頼要素の強化が効果的です。',
+    },
+    1: {
+      name: '使いやすさ',
+      current: '見出し構造や読み込み速度、画像最適化などのユーザビリティ要素に改善の余地が見られます。',
+      impact: 'ご来訪された方の閲覧体験や離脱率に影響している可能性があります。',
+      hint: '見出しタグ(H1/H2)の整理、画像の軽量化、読み込み速度の最適化が効果的です。',
+    },
+    2: {
+      name: 'Google検索対策',
+      current: '構造化データやcanonicalタグなど、検索エンジンに情報を伝える要素に整備の余地が見られます。',
+      impact: '検索結果での表示や、地域検索からの新規流入機会に影響している可能性があります。',
+      hint: 'MedicalClinic/LocalBusinessなどの構造化データ追加、canonicalタグ設定、コンテンツ階層の整理が効果的です。',
+    },
+    3: {
+      name: '予約のしやすさ',
+      current: '電話リンク・問い合わせフォーム・予約導線などに整備の余地が見られます。',
+      impact: '「ご予約まであと一歩」のところでの離脱が生じている可能性があります。',
+      hint: 'ヘッダー固定の電話番号、Web予約システム導入、診療時間・アクセス情報の明示が効果的です。',
+    },
+    4: {
+      name: 'スマホ対応',
+      current: 'viewport設定やメディアクエリ、レスポンシブレイアウトに改善の余地が見られます。',
+      impact: 'スマートフォンからご来訪された方の閲覧体験に影響している可能性があります。一般的に医院検索の7割以上はスマートフォン経由とされています。',
+      hint: 'レスポンシブデザインの見直し、タップしやすいボタン設計、電話番号のタップ発信対応が効果的です。',
+    },
+  };
+
   function unlockWorstPanel(scores) {
     const vals = [scores.uiux, scores.usability, scores.ia, scores.cta, scores.mobile];
     const worstIdx = vals.indexOf(Math.min(...vals));
+    const worstScore = vals[worstIdx];
+    const worstColor = getColor(worstScore);
+    const c = UNLOCKED_CONTENT[worstIdx] || UNLOCKED_CONTENT[0];
 
     const overlay = document.getElementById('diagnosisLockOverlay');
 
@@ -2088,30 +2234,42 @@ function scrollToForm() {
     // Create unlocked section before the locked overlay
     const unlockedSection = document.createElement('div');
     unlockedSection.id = 'unlockedDiagSection';
-    unlockedSection.innerHTML = '<div class="unlocked-badge"><span>\uD83D\uDD13</span> 最も改善が必要な項目をお見せします</div>';
+    unlockedSection.innerHTML =
+      '<div class="unlocked-badge"><span>\uD83D\uDD13</span> 最も改善余地のある項目を公開します</div>' +
+      '<div class="unlocked-panel">' +
+        '<div class="unlocked-panel-head">' +
+          '<span class="unlocked-panel-cat">' + c.name + '</span>' +
+          '<span class="unlocked-panel-score" style="color:' + worstColor + '">' + worstScore + '点</span>' +
+        '</div>' +
+        '<div class="unlocked-panel-row">' +
+          '<div class="unlocked-panel-label">▼ 現在の状態</div>' +
+          '<div class="unlocked-panel-text">' + c.current + '</div>' +
+        '</div>' +
+        '<div class="unlocked-panel-row">' +
+          '<div class="unlocked-panel-label">▼ 想定される影響</div>' +
+          '<div class="unlocked-panel-text">' + c.impact + '</div>' +
+        '</div>' +
+        '<div class="unlocked-panel-row">' +
+          '<div class="unlocked-panel-label">▼ 改善のヒント</div>' +
+          '<div class="unlocked-panel-text">' + c.hint + '</div>' +
+        '</div>' +
+      '</div>';
     overlay.parentNode.insertBefore(unlockedSection, overlay);
-
-    // Clone the worst panel and show it unlocked
-    const panel = document.getElementById('panel' + worstIdx);
-    const clone = panel.cloneNode(true);
-    clone.classList.add('active');
-    clone.style.display = 'block';
-    clone.id = 'unlockedPanel';
-    unlockedSection.appendChild(clone);
 
     // Hide the worst tab in the locked overlay (avoid duplicate)
     const tabs = overlay.querySelectorAll('.diagnosis-tab');
     if (tabs[worstIdx]) tabs[worstIdx].style.display = 'none';
-    panel.style.display = 'none';
+    const worstPanel = document.getElementById('panel' + worstIdx);
+    if (worstPanel) worstPanel.style.display = 'none';
 
     // Show a different tab in the blur area
     const nextTab = worstIdx === 0 ? 1 : 0;
     switchTab(nextTab);
 
-    // Update the lock overlay title
+    // Update the lock overlay title (keep aligned with new copy)
     const lockTitle = document.querySelector('.diagnosis-cta-overlay h3');
     if (lockTitle) {
-      lockTitle.textContent = '残り4項目の詳細分析もご覧になりますか？';
+      lockTitle.textContent = '他の4項目では、貴院の集患力を高める具体策を確認できます';
     }
   }
 
