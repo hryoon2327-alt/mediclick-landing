@@ -198,11 +198,11 @@
     .problem-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
     .problem-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
     .problem-warning {
-      background: linear-gradient(135deg, #fff5f5, #fff0f0);
-      border: 1px solid #ffd0d0; border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--brand-blue-light), #f0f8fc);
+      border: 1px solid var(--border); border-radius: var(--radius);
       padding: 24px 28px; text-align: center;
     }
-    .problem-warning p { font-size: 16px; font-weight: 700; color: var(--red); }
+    .problem-warning p { font-size: 15px; font-weight: 700; color: var(--brand-navy); }
     .problem-warning span { font-size: 13px; color: var(--text-secondary); margin-top: 6px; display: block; }
 
     /* ========== HOW IT WORKS ========== */
@@ -672,12 +672,20 @@
     .detected-val.bad { color: var(--red); font-weight: 700; }
 
     /* ========== FOOTER ========== */
-    .footer { background: var(--brand-navy); color: rgba(255,255,255,0.6); padding: 40px; text-align: center; }
-    .footer-logo { font-size: 20px; font-weight: 900; color: var(--brand-blue); margin-bottom: 10px; }
-    .footer-links { display: flex; gap: 24px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-    .footer-links a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 12px; transition: color 0.2s; }
-    .footer-links a:hover { color: #fff; }
-    .footer-copy { font-size: 11px; }
+    .footer { background: var(--brand-navy); color: rgba(255,255,255,0.6); padding: 36px 24px; text-align: center; }
+    .footer-tool-note {
+      font-size: 13px; color: rgba(255,255,255,0.7);
+      margin-bottom: 14px; line-height: 1.7;
+    }
+    .footer-tool-note a {
+      color: var(--brand-blue); text-decoration: none; font-weight: 700;
+    }
+    .footer-tool-note a:hover { text-decoration: underline; }
+    .footer-disclaimer {
+      font-size: 10px; color: rgba(255,255,255,0.4);
+      max-width: 680px; margin: 0 auto 14px; line-height: 1.8;
+    }
+    .footer-copy { font-size: 11px; color: rgba(255,255,255,0.35); }
 
     /* ========== BACKGROUND DECORATION ========== */
 
@@ -943,12 +951,12 @@
     </div>
 
     <div class="hero-headline">
-      貴院のホームページ、<br /><em>患者様に届いていますか？</em>
+      貴院のホームページを<br /><em>5つの視点から無料で診断します</em>
     </div>
 
     <p class="hero-sub">
-      AIがホームページを分析し、UI・集患導線・情報設計など<br />
-      5項目でスコアリング。改善提案まで無料でご提供します。
+      第一印象・使いやすさ・検索対策・予約導線・スマホ対応の5項目を<br />
+      AIが自動分析し、改善の方向性を無料でご提案いたします。
     </p>
 
     <div class="url-form">
@@ -988,40 +996,40 @@
 <!-- PROBLEM SECTION -->
 <section class="section problem-section">
   <div class="section-inner">
-    <p class="section-label">よくある課題</p>
+    <p class="section-label">よくある改善ポイント</p>
     <h2 class="section-title">
-      多くの医院ホームページに、<br />共通する問題があります。
+      医院ホームページに見られる<br />代表的な改善余地
     </h2>
     <p class="section-desc">
-      患者様がネットで医院を探す時代。ホームページの質が、来院数に直結しています。
+      患者様がネットで医院を探す時代、ホームページの整備状況は来院機会に影響します。
     </p>
 
     <div class="problem-grid">
       <div class="problem-card">
         <div class="problem-icon">📄</div>
-        <div class="problem-title">情報が整理されていない</div>
-        <div class="problem-desc">診療内容や料金案内が分かりにくく、患者様が必要な情報にたどり着けない状態になっています。</div>
+        <div class="problem-title">情報の整理に余地がある</div>
+        <div class="problem-desc">診療内容や料金案内の構成によっては、必要な情報が患者様に伝わりにくくなる場合があります。</div>
       </div>
       <div class="problem-card">
         <div class="problem-icon">📱</div>
-        <div class="problem-title">スマホ対応が不十分</div>
-        <div class="problem-desc">現在の医院検索の7割以上はスマートフォンから。表示崩れや操作性の悪さが離脱を招いています。</div>
+        <div class="problem-title">スマートフォン表示の最適化</div>
+        <div class="problem-desc">医院検索の多くはスマートフォン経由です。表示レイアウトや操作性の最適化で、閲覧体験が向上する可能性があります。</div>
       </div>
       <div class="problem-card">
         <div class="problem-icon">📅</div>
-        <div class="problem-title">予約導線が弱い</div>
-        <div class="problem-desc">「予約ボタンが見つからない」「電話番号が小さい」など、来院まであと一歩のところで機会を失っています。</div>
+        <div class="problem-title">ご予約導線の明瞭さ</div>
+        <div class="problem-desc">予約ボタンの配置や電話番号の見やすさによって、ご予約・お問い合わせのしやすさに差が出ます。</div>
       </div>
       <div class="problem-card">
         <div class="problem-icon">🏥</div>
-        <div class="problem-title">医院の強みが伝わらない</div>
-        <div class="problem-desc">設備や専門性・ドクターの人柄など、選ばれる理由が患者様に届いていないケースが多く見られます。</div>
+        <div class="problem-title">医院の特長の伝わり方</div>
+        <div class="problem-desc">設備や専門性、ドクターの人柄など、選ばれる理由を伝える構成に整備の余地があるケースが多く見られます。</div>
       </div>
     </div>
 
     <div class="problem-warning">
-      <p>これらの問題は、来院機会の損失につながる可能性があります。</p>
-      <span>ホームページを訪問した患者候補者のうち、改善前は平均60%以上が離脱するとも言われています。</span>
+      <p>これらは、ご来院機会の向上につながる改善ポイントです。</p>
+      <span>貴院のホームページの現状を無料診断でご確認いただけます。</span>
     </div>
   </div>
 </section>
@@ -1030,28 +1038,28 @@
 <section class="section how-section">
   <div class="section-inner">
     <p class="section-label">診断の流れ</p>
-    <h2 class="section-title">たった3ステップで診断完了</h2>
+    <h2 class="section-title">3ステップでご確認いただけます</h2>
 
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
         <div>
-          <div class="step-title">URLを入力する</div>
-          <div class="step-desc">貴院のホームページURLを入力するだけ。会員登録・個人情報の入力は不要です。</div>
+          <div class="step-title">URLを入力</div>
+          <div class="step-desc">貴院のホームページURLをご入力ください。会員登録や個人情報のご入力は不要です。</div>
         </div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <div>
-          <div class="step-title">AIが自動診断</div>
-          <div class="step-desc">5つの評価軸でホームページを分析。約60秒でスコアリングを完了します。</div>
+          <div class="step-title">AIが自動で分析</div>
+          <div class="step-desc">5つの評価軸でホームページの現状を自動分析します。約60秒で診断が完了します。</div>
         </div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div>
-          <div class="step-title">レポートを確認</div>
-          <div class="step-desc">スコアと改善提案を分かりやすくレポート化。そのまま相談にもつなげられます。</div>
+          <div class="step-title">診断結果をご確認</div>
+          <div class="step-desc">スコアと改善方向を分かりやすくまとめてご提示します。ご希望に応じて無料相談にお進みいただけます。</div>
         </div>
       </div>
     </div>
@@ -1459,62 +1467,62 @@
 <!-- BEFORE / AFTER -->
 <section class="ba-section">
   <div class="ba-inner">
-    <p class="section-label">改善イメージ</p>
-    <h2 class="section-title">Before / After 改善事例</h2>
-    <p class="section-desc">メディクリックの改善支援を受けた医院様の代表的な変化をご紹介します。</p>
+    <p class="section-label">改善のイメージ</p>
+    <h2 class="section-title">Before / After 改善の方向性</h2>
+    <p class="section-desc">メディクリックがご支援する医院ホームページの、整備前と整備後の代表的な変化です。</p>
 
     <div class="ba-grid">
       <div class="ba-card ba-before">
         <div class="ba-card-head">
-          ✗ 改善前（Before）
+          整備前（Before）
         </div>
         <div class="ba-card-body">
           <div class="ba-item">
             <div class="ba-dot"></div>
-            <span>トップページに診療科・電話番号・予約リンクがバラバラに配置されており、患者様が迷いやすい</span>
+            <span>トップページに診療科・電話番号・予約リンクの配置が分散し、患者様が必要な情報にたどり着きにくい</span>
           </div>
           <div class="ba-item">
             <div class="ba-dot"></div>
-            <span>スマートフォンで表示するとレイアウトが崩れ、電話番号がタップできない</span>
+            <span>スマートフォンでの表示レイアウトや、電話番号のタップ操作に最適化の余地がある</span>
           </div>
           <div class="ba-item">
             <div class="ba-dot"></div>
-            <span>医師のプロフィールや診療方針がなく、信頼性の訴求が弱い</span>
+            <span>医師のプロフィールや診療方針の掲載が限定的で、信頼感の訴求に余地がある</span>
           </div>
           <div class="ba-item">
             <div class="ba-dot"></div>
-            <span>オンライン予約機能がなく、予約は電話のみで時間外の問い合わせを取りこぼしている</span>
+            <span>Web予約の導線がなく、お電話のみでのご予約となっている</span>
           </div>
           <div class="ba-item">
             <div class="ba-dot"></div>
-            <span>Googleマップの情報が古く、営業時間・口コミ管理が放置されている</span>
+            <span>Googleマップ上の情報（営業時間・口コミなど）の更新に余地がある</span>
           </div>
         </div>
       </div>
       <div class="ba-card ba-after">
         <div class="ba-card-head">
-          ✓ 改善後（After）
+          整備後（After）
         </div>
         <div class="ba-card-body">
           <div class="ba-item">
             <div class="ba-dot"></div>
-            <span>ファーストビューに「診療科・診療時間・予約ボタン」を集約し、来院意欲を高める設計に変更</span>
+            <span>ファーストビューに「診療科・診療時間・予約ボタン」を集約し、来院検討時に必要な情報をまとめてご提示</span>
           </div>
           <div class="ba-item">
             <div class="ba-dot"></div>
-            <span>完全モバイル対応により、スマホからのタップ発信・Web予約が簡単に</span>
+            <span>スマートフォンからのタップ発信・Web予約がスムーズに行える構成に整備</span>
           </div>
           <div class="ba-item">
             <div class="ba-dot"></div>
-            <span>院長プロフィール・診療方針・スタッフ紹介を充実させ、安心感と信頼性を向上</span>
+            <span>院長プロフィール・診療方針・スタッフ紹介を掲載し、安心感と信頼性を伝える構成に</span>
           </div>
           <div class="ba-item">
             <div class="ba-dot"></div>
-            <span>24時間対応のWeb予約システム導入により、時間外の予約獲得数が大幅に増加</span>
+            <span>24時間ご利用可能なWeb予約システムを整備し、ご予約のしやすさを向上</span>
           </div>
           <div class="ba-item">
             <div class="ba-dot"></div>
-            <span>MEO対策の実施でGoogleマップ上位表示を達成し、新規患者様からの来院が増加</span>
+            <span>Googleマップ上の情報を整備し、地域検索での見つけやすさを改善</span>
           </div>
         </div>
       </div>
@@ -1525,12 +1533,12 @@
 <!-- CTA BANNER -->
 <section class="cta-banner">
   <h2 class="cta-banner-title">
-    まずは無料診断から。<br />貴院の課題を可視化しましょう。
+    まずは無料診断から、<br />貴院ホームページの現状をご確認ください。
   </h2>
-  <p class="cta-banner-desc">診断後の相談・提案も完全無料。しつこい営業は行いません。</p>
+  <p class="cta-banner-desc">診断後のご相談・ご提案も無料です。継続的な営業のご連絡はいたしません。</p>
   <div class="cta-btn-group">
     <button class="cta-btn-primary" onclick="document.getElementById('urlInput').focus(); window.scrollTo({top:0,behavior:'smooth'})">無料診断を始める</button>
-    <button class="cta-btn-secondary" onclick="scrollToForm()">資料・レポートを受け取る</button>
+    <button class="cta-btn-secondary" onclick="scrollToForm()">相談してみる</button>
   </div>
 </section>
 
@@ -1703,19 +1711,14 @@
 
 <!-- FOOTER -->
 <footer class="footer">
-  <img src="/img/logo_footer.png" alt="Mediclick（メディクリック）" style="height:26px;width:auto;margin-bottom:10px;" />
-  <div class="footer-links">
-    <a href="#">サービス紹介</a>
-    <a href="#">制作実績</a>
-    <a href="#">料金案内</a>
-    <a href="#">会社概要</a>
-    <a href="#">プライバシーポリシー</a>
-    <a href="#">お問い合わせ</a>
-  </div>
-  <p style="font-size:11px;color:rgba(255,255,255,0.35);max-width:680px;margin:0 auto 14px;line-height:1.8;">
-    【免責事項】本ツールが提供する診断結果は、AIによる自動分析に基づく参考情報であり、特定の成果や効果を保証するものではありません。診断スコアはホームページの構造・メタ情報・CSSデータ等をもとに算出した指標であり、実際の集患効果・検索順位・ビジネス成果とは異なる場合があります。本診断結果を利用したことにより生じたいかなる損害についても、メディクリック株式会社は一切の責任を負いかねます。
+  <img src="/img/logo_footer.png" alt="Mediclick（メディクリック）" style="height:24px;width:auto;margin-bottom:12px;" />
+  <p class="footer-tool-note">
+    本ツールは <a href="https://mediclick-platform.com" target="_blank" rel="noopener">メディクリック</a> が提供する医院ホームページの無料分析サービスです。
   </p>
-  <p class="footer-copy">© 2024 Mediclick Inc. All rights reserved.</p>
+  <p class="footer-disclaimer">
+    【免責事項】本ツールの診断結果はAIによる自動分析に基づく参考情報であり、特定の成果や効果を保証するものではありません。診断スコアはホームページの構造・メタ情報・CSSデータ等をもとに算出した指標であり、実際の集患効果・検索順位・ビジネス成果とは異なる場合があります。
+  </p>
+  <p class="footer-copy">© 2026 Mediclick. All rights reserved.</p>
 </footer>
 
 <script>
