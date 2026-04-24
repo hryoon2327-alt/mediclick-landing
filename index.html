@@ -4,6 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>医院ホームページ 無料AI診断 | Mediclick（メディクリック）</title>
+  <meta name="description" content="5つの視点からホームページの改善余地を診断します。AIが自動分析し、改善の方向性を無料でご提案いたします。" />
+
+  <!-- OGP -->
+  <meta property="og:title" content="医院ホームページ無料診断ツール｜Mediclick" />
+  <meta property="og:description" content="5つの視点からホームページの改善余地を診断します" />
+  <meta property="og:image" content="/img/logo_header.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Mediclick" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="医院ホームページ無料診断ツール｜Mediclick" />
+  <meta name="twitter:description" content="5つの視点からホームページの改善余地を診断します" />
+  <meta name="twitter:image" content="/img/logo_header.png" />
+
+  <!-- Google Analytics 4 (placeholder — replace with real ID) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
@@ -389,6 +413,45 @@
     }
     .competitor-badge strong { color: var(--text-primary); font-weight: 700; }
     .competitor-badge-icon { font-size: 14px; }
+
+    /* ========== MINI CTA (under warning box) ========== */
+    .mini-cta-wrap {
+      text-align: center; margin: -8px 0 28px;
+    }
+    .mini-cta-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #fff; color: var(--brand-blue);
+      border: 1.5px solid var(--brand-blue); border-radius: 100px;
+      padding: 10px 24px; font-size: 13px; font-weight: 700;
+      font-family: inherit; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .mini-cta-btn:hover {
+      background: var(--brand-blue); color: #fff;
+      transform: translateY(-1px);
+    }
+
+    /* ========== MOBILE STICKY CTA (result page only) ========== */
+    .sticky-cta-bar {
+      display: none;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #fff;
+      border-top: 1px solid var(--border);
+      padding: 10px 16px env(safe-area-inset-bottom, 10px);
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+      z-index: 90;
+    }
+    .sticky-cta-bar.active { display: block; }
+    .sticky-cta-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--brand-blue), var(--brand-blue-dark));
+      color: #fff; border: none; border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 15px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: opacity 0.15s;
+      box-shadow: 0 4px 14px rgba(42,172,226,0.35);
+    }
+    .sticky-cta-btn:active { opacity: 0.9; }
 
     .diag-card { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; }
     .diag-card-head {
@@ -906,8 +969,17 @@
       .result-inner { display: flex; flex-direction: column; }
       .score-overview     { order: 1; }
       .score-warning-box  { order: 2; }
+      .mini-cta-wrap      { order: 3; }
       .chart-section      { order: 5; }
       .findings-card      { order: 6; }
+
+      /* Sticky CTA only on mobile */
+      body.has-result-view { padding-bottom: 80px; }
+      .mini-cta-btn { font-size: 12px; padding: 9px 20px; }
+    }
+    @media (min-width: 769px) {
+      /* Hide sticky on desktop */
+      .sticky-cta-bar { display: none !important; }
     }
   </style>
 </head>
@@ -920,7 +992,7 @@
       <img src="/img/logo_header.png" alt="Mediclick（メディクリック）" class="logo-img" />
     </a>
   </div>
-  <button class="header-cta" onclick="scrollToForm()">相談してみる →</button>
+  <button class="header-cta" onclick="trackCtaClick('header')">相談してみる →</button>
 </header>
 
 <!-- HERO SECTION -->
@@ -1163,6 +1235,11 @@
       <div class="score-warning-text" id="scoreWarningText"></div>
     </div>
 
+    <!-- MINI CTA -->
+    <div class="mini-cta-wrap" id="miniCtaWrap" style="display:none;">
+      <button class="mini-cta-btn" onclick="trackCtaClick('mini')">改善策を確認する →</button>
+    </div>
+
     <div class="chart-section">
       <div class="chart-card">
         <div class="chart-card-title">スコアレーダーチャート</div>
@@ -1391,7 +1468,7 @@
         <span class="competitor-badge-icon">🔍</span>
         <span>無料相談では<strong>近隣医院との比較データ</strong>もお見せします</span>
       </div>
-      <button class="diagnosis-cta-btn" onclick="scrollToForm()">改善策を確認する →</button>
+      <button class="diagnosis-cta-btn" onclick="trackCtaClick('blur')">改善策を確認する →</button>
       <div class="diagnosis-lock-badges">
         <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg> 完全無料</span>
         <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg> 1〜2営業日以内にご連絡</span>
@@ -1423,7 +1500,7 @@
     </p>
 
     <div class="cta-btn-group" style="justify-content:center; margin-bottom:24px;">
-      <button class="cta-btn-primary" onclick="scrollToForm()" style="font-size:18px; padding:20px 48px;">無料で相談する →</button>
+      <button class="cta-btn-primary" onclick="trackCtaClick('conversion')" style="font-size:18px; padding:20px 48px;">無料で相談する →</button>
     </div>
 
     <div class="safety-box">
@@ -1514,7 +1591,7 @@
   <p class="cta-banner-desc">診断後のご相談・ご提案も無料です。継続的な営業のご連絡はいたしません。</p>
   <div class="cta-btn-group">
     <button class="cta-btn-primary" onclick="document.getElementById('urlInput').focus(); window.scrollTo({top:0,behavior:'smooth'})">無料診断を始める</button>
-    <button class="cta-btn-secondary" onclick="scrollToForm()">相談してみる</button>
+    <button class="cta-btn-secondary" onclick="trackCtaClick('cta_banner')">相談してみる</button>
   </div>
 </section>
 
@@ -1697,6 +1774,11 @@
   <p class="footer-copy">© 2026 Mediclick. All rights reserved.</p>
 </footer>
 
+<!-- MOBILE STICKY CTA (shown only on result page, mobile only) -->
+<div class="sticky-cta-bar" id="stickyCtaBar">
+  <button class="sticky-cta-btn" onclick="trackCtaClick('sticky')">改善策を確認する →</button>
+</div>
+
 <script>
   /* ================================================================
      MEDICLICK – REAL URL ANALYSIS ENGINE
@@ -1709,9 +1791,21 @@
 
   let radarChart, barChart;
   let lastAnalysis = null;
+  let currentScoreTotal = null;   // GA4 이벤트용
 
 function scrollToForm() {
     document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  /* ── GA4 CTA 클릭 트래킹 ─ 기존 scrollToForm() 호출 래퍼 ─ */
+  function trackCtaClick(location) {
+    if (typeof gtag === 'function') {
+      gtag('event', 'click_cta_consult', {
+        cta_location: location,
+        score_total: currentScoreTotal,
+      });
+    }
+    scrollToForm();
   }
 
   /* ── UTILITIES ─────────────────────────────────────────────── */
@@ -1903,6 +1997,15 @@ function scrollToForm() {
   function renderResults(url, scores, isFallback) {
     const total = Math.round((scores.uiux + scores.usability + scores.ia + scores.cta + scores.mobile) / 5);
 
+    // GA4: 결과 화면 진입 + CTA 노출 활성화
+    currentScoreTotal = total;
+    if (typeof gtag === 'function') {
+      gtag('event', 'view_result', { score_total: total });
+    }
+    document.getElementById('miniCtaWrap').style.display = 'block';
+    document.getElementById('stickyCtaBar').classList.add('active');
+    document.body.classList.add('has-result-view');
+
     document.getElementById('resultUrl').textContent = url;
     const now = new Date();
     document.getElementById('resultDate').textContent =
@@ -2054,6 +2157,9 @@ function scrollToForm() {
     }
 
     const url = normalizeUrl(raw);
+
+    // GA4: 診断開始
+    if (typeof gtag === 'function') gtag('event', 'start_analysis');
 
     // Show loading overlay
     resetLoadingSteps();
