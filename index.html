@@ -154,22 +154,6 @@
     .trust-badge-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
     .trust-badge-item svg { color: var(--green); }
 
-    /* ========== DIAG COUNTER BANNER ========== */
-    .diag-counter-banner {
-      display: inline-flex; align-items: center; gap: 10px;
-      background: rgba(255,255,255,0.9); border: 2px solid var(--brand-blue);
-      border-radius: 100px; padding: 10px 28px;
-      margin-top: 20px; margin-bottom: 8px;
-      box-shadow: 0 4px 16px rgba(42,172,226,0.15);
-    }
-    .diag-counter-num {
-      font-size: 22px; font-weight: 900; color: var(--brand-blue);
-      min-width: 40px; text-align: center;
-    }
-    .diag-counter-label {
-      font-size: 13px; font-weight: 700; color: var(--text-secondary);
-    }
-
     /* ========== PROBLEM SECTION ========== */
     .section { padding: 80px 40px; }
     .section-inner { max-width: 960px; margin: 0 auto; }
@@ -900,10 +884,6 @@
       .conversion-point { font-size: 12px; padding: 8px 14px; }
       .cta-btn-primary { font-size: 15px !important; padding: 16px 32px !important; width: 100%; }
 
-      .diag-counter-banner { padding: 8px 20px; margin-top: 16px; }
-      .diag-counter-num { font-size: 18px; }
-      .diag-counter-label { font-size: 12px; }
-
       .competitor-badge-icon { display: none; }
       .competitor-badge { font-size: 11px; padding: 6px 14px; }
 
@@ -966,15 +946,11 @@
         <input type="url" class="url-input" id="urlInput"
           placeholder="例：https://your-clinic.com"
           autocomplete="off" />
-        <button class="url-submit" onclick="startDiagnosis()">無料診断を開始する</button>
+        <button class="url-submit" onclick="startDiagnosis()">診断をはじめる →</button>
       </div>
       <p class="url-note">※ 個人情報の入力は不要です。診断は完全無料です。</p>
     </div>
 
-    <div class="diag-counter-banner" id="diagCounterBanner">
-      <div class="diag-counter-num" id="diagCountBadge">-</div>
-      <div class="diag-counter-label">医院の診断を実施</div>
-    </div>
 
     <div class="trust-badges">
       <span class="trust-badge-item">
@@ -2321,17 +2297,6 @@ function scrollToForm() {
     if (e.key === 'Enter') startDiagnosis();
   });
 
-  // Load diagnosis counter
-  (async function() {
-    try {
-      const res = await fetch('/api/stats');
-      const data = await res.json();
-      const count = data.totalDiagnoses || 0;
-      document.getElementById('diagCountBadge').textContent = count + '件';
-    } catch(_) {
-      document.getElementById('diagCounterBanner').style.display = 'none';
-    }
-  })();
 </script>
 </body>
 </html>
