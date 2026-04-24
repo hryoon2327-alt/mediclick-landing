@@ -171,6 +171,17 @@
     }
     .url-submit:hover { opacity: 0.9; }
     .url-note { font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: left; }
+    .url-error {
+      background: #fff5f5; border: 1px solid #ffcccc;
+      border-left: 3px solid var(--red); border-radius: 8px;
+      padding: 12px 14px; margin-top: 12px;
+      font-size: 13px; color: #c33; text-align: left;
+      display: flex; align-items: flex-start; gap: 8px;
+      animation: fadeIn 0.25s ease;
+    }
+    .url-error-icon { flex-shrink: 0; font-size: 15px; line-height: 1.5; }
+    .url-error-text { line-height: 1.6; }
+    .url-error-text strong { color: #a00; }
     .trust-badges {
       display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;
       margin-top: 24px;
@@ -1029,6 +1040,10 @@
           autocomplete="off" inputmode="url" />
         <button class="url-submit" onclick="startDiagnosis()">診断をはじめる →</button>
       </div>
+      <div class="url-error" id="urlError" style="display:none;">
+        <span class="url-error-icon">⚠️</span>
+        <span class="url-error-text" id="urlErrorText"></span>
+      </div>
       <p class="url-note">※ 個人情報の入力は不要です。診断は完全無料です。</p>
     </div>
 
@@ -1849,6 +1864,52 @@ function scrollToForm() {
     return 'https://' + raw;
   }
 
+  /* ── URL 입력 검증 ─ client-side로 명백한 오류를 먼저 차단 ─ */
+  function validateUrlInput(raw) {
+    if (!raw) {
+      return 'URLをご入力ください。';
+    }
+    if (/\s/.test(raw)) {
+      return 'URLに空白は含められません。ご確認のうえ、再度ご入力ください。';
+    }
+    const stripped = raw.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+    // ドメインに最低1つ "." と TLD が必要
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9.\-_\/:?=&%#]*\.[a-zA-Z]{2,}/.test(stripped)) {
+      return '正しいURL形式でご入力ください。（例：your-clinic.com）';
+    }
+    // localhost / IP / 内部URLなど、公開サイトではない入力を弾く
+    if (/^(localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/i.test(stripped)) {
+      return '公開されている医院ホームページのURLをご入力ください。';
+    }
+    return null; // OK
+  }
+
+  function showUrlError(message) {
+    const box = document.getElementById('urlError');
+    document.getElementById('urlErrorText').innerHTML = message;
+    box.style.display = 'flex';
+    // 入力欄にフォーカス戻して再入力を促す
+    const inp = document.getElementById('urlInput');
+    inp.focus();
+    inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function clearUrlError() {
+    document.getElementById('urlError').style.display = 'none';
+  }
+
+  /* サーバーからの errorType → 사용자용 メッセージ */
+  function apiErrorMessage(errorType) {
+    const m = {
+      timeout:      'サイトの応答が時間内に得られませんでした。<br>サイトが公開中であることをご確認のうえ、しばらく時間をおいて再度お試しください。',
+      dns:          'ドメインが見つかりませんでした。<br>URLを正しくご入力いただいているかご確認ください。',
+      ssl:          'サイトのSSL証明書に問題があります。<br>URLをご確認ください。',
+      fetch_failed: 'サイトへの接続ができませんでした。<br>URLが正しいか、サイトが現在公開されているかをご確認ください。',
+      unknown:      '診断中にエラーが発生しました。<br>URLをご確認のうえ、再度お試しください。',
+    };
+    return m[errorType] || m.unknown;
+  }
+
   /* ── CALL SERVER API ───────────────────────────────────────── */
   async function callAnalyzeAPI(url) {
     const res = await fetch(`${API_BASE}/api/analyze`, {
@@ -2158,13 +2219,14 @@ function scrollToForm() {
   /* ── MAIN ENTRY POINT ─────────────────────────────────────── */
   async function startDiagnosis() {
     const raw = document.getElementById('urlInput').value.trim();
-    if (!raw) {
-      const inp = document.getElementById('urlInput');
-      inp.focus();
-      inp.style.outline = '3px solid #e85252';
-      setTimeout(() => { inp.style.outline = ''; }, 1500);
+
+    // ── 1) Client-side validation ──
+    const validationError = validateUrlInput(raw);
+    if (validationError) {
+      showUrlError(validationError);
       return;
     }
+    clearUrlError();
 
     const url = normalizeUrl(raw);
 
@@ -2176,12 +2238,12 @@ function scrollToForm() {
     document.getElementById('loadingSection').classList.add('active');
     runLoadingAnimation(8000);
 
-    // Call backend API (server fetches URL server-side – no CORS)
+    // ── 2) Call backend ──
     let apiResult;
     try {
       apiResult = await callAnalyzeAPI(url);
     } catch (e) {
-      apiResult = { ok: false, url, error: e.message };
+      apiResult = { ok: false, url, error: e.message, errorType: 'fetch_failed' };
     }
 
     // Finish loading UI
@@ -2189,64 +2251,19 @@ function scrollToForm() {
     await new Promise(r => setTimeout(r, 400));
     document.getElementById('loadingSection').classList.remove('active');
 
+    // ── 3) 결과 처리 ──
     if (apiResult.ok) {
-      // ✅ Real data from server
+      // ✅ Real data — show result page
       lastAnalysis = apiResult.findings;
       renderResults(apiResult.url || url, apiResult.scores, false);
       renderFindingsCard(lastAnalysis);
       injectDetectedData(lastAnalysis);
     } else {
-      // ⚠️ Server couldn't reach target site – show what we know
+      // ❌ 分析失敗 → 結果画面には遷移せず、入力欄にエラー表示
       lastAnalysis = null;
       const errorType = apiResult.errorType || 'unknown';
-      renderResultsWithError(url, errorType, apiResult.error);
+      showUrlError(apiErrorMessage(errorType));
     }
-  }
-
-  /* ── ERROR STATE RENDERER ─────────────────────────────────── */
-  function renderResultsWithError(url, errorType, rawError) {
-    const messages = {
-      timeout:     'サイトの応答がタイムアウトしました。サイトが現在停止中か、応答に時間がかかりすぎています。',
-      dns:         'ドメインが見つかりませんでした。URLを正しく入力されているかご確認ください。',
-      ssl:         'SSL証明書に問題があります。サイトのセキュリティ設定を確認してください。',
-      fetch_failed:'サイトへの接続に失敗しました。URLが正しいか、サイトが公開されているかご確認ください。',
-      unknown:     'サイトの取得中にエラーが発生しました。URLをご確認のうえ、再度お試しください。',
-    };
-
-    // Show result section with error UI
-    document.getElementById('resultUrl').textContent = url;
-    const now = new Date();
-    document.getElementById('resultDate').textContent =
-      `診断日時：${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
-
-    // Zero scores with grey ring
-    document.getElementById('scoreRing').style.background = '#e8f6fd';
-    document.getElementById('totalScoreNum').textContent  = '—';
-    document.getElementById('totalScoreNum').style.color  = '#aaa';
-    document.getElementById('totalScoreGrade').textContent = '';
-
-    ['score1','score2','score3','score4','score5'].forEach(id => {
-      document.getElementById(id).textContent = '—';
-    });
-
-    document.getElementById('resultSection').classList.add('active');
-
-    // Show findings card with friendly error
-    const card      = document.getElementById('findingsCard');
-    const errBanner = document.getElementById('fetchErrorBanner');
-    const errText   = document.getElementById('fetchErrorText');
-    const grid      = document.getElementById('findingsGrid');
-
-    errBanner.style.display = 'flex';
-    errText.textContent = messages[errorType] || messages.unknown;
-    grid.innerHTML = `
-      <div style="font-size:13px;color:var(--text-secondary);padding:8px 0;">
-        URLを再確認のうえ、もう一度お試しください。<br>
-        問題が続く場合は、メディクリックへ直接ご相談いただくことも可能です。
-      </div>`;
-    card.style.display = 'block';
-
-    setTimeout(() => document.getElementById('resultSection').scrollIntoView({ behavior:'smooth' }), 150);
   }
 
   /* ── TAB SWITCHER ─────────────────────────────────────────── */
@@ -2408,10 +2425,12 @@ function scrollToForm() {
     setTimeout(() => { card.style.display='none'; success.classList.add('active'); }, 300);
   }
 
-  /* ── KEYBOARD ─────────────────────────────────────────────── */
+  /* ── KEYBOARD & INPUT ─────────────────────────────────────── */
   document.getElementById('urlInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') startDiagnosis();
   });
+  // 유저가 URL 수정하면 기존 에러 숨김
+  document.getElementById('urlInput').addEventListener('input', clearUrlError);
 
 </script>
 </body>
