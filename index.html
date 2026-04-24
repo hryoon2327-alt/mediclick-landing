@@ -915,9 +915,18 @@
 
       /* Result page mobile */
       .score-overview { grid-template-columns: 1fr; text-align: center; padding: 20px; }
-      .total-score-ring { width: 130px; height: 130px; margin: 0 auto 12px; }
-      .total-score-inner { width: 105px; height: 105px; }
+      .total-score-wrap {
+        display: flex; flex-direction: column; align-items: center;
+        gap: 10px; justify-content: center;
+      }
+      .total-score-ring {
+        width: 140px; height: 140px; margin: 0 auto;
+        flex-shrink: 0; aspect-ratio: 1 / 1;
+      }
+      .total-score-inner { width: 114px; height: 114px; }
       .total-score-num { font-size: 38px; }
+      .total-score-grade { white-space: nowrap; margin-top: 0; }
+      .total-score-meaning { margin-top: 4px; }
       .score-bars { gap: 12px; }
       .score-bar-name { font-size: 12px; }
 
@@ -1014,10 +1023,10 @@
     <div class="url-form">
       <label class="url-form-label">医院ホームページのURLを入力してください</label>
       <div class="url-input-wrap">
-        <span class="url-prefix">🔍 URL</span>
-        <input type="url" class="url-input" id="urlInput"
-          placeholder="例：https://your-clinic.com"
-          autocomplete="off" />
+        <span class="url-prefix">https://</span>
+        <input type="text" class="url-input" id="urlInput"
+          placeholder="your-clinic.com"
+          autocomplete="off" inputmode="url" />
         <button class="url-submit" onclick="startDiagnosis()">診断をはじめる →</button>
       </div>
       <p class="url-note">※ 個人情報の入力は不要です。診断は完全無料です。</p>
@@ -1835,8 +1844,9 @@ function scrollToForm() {
   }
   function normalizeUrl(raw) {
     raw = raw.trim();
-    if (!raw.startsWith('http')) raw = 'https://' + raw;
-    return raw;
+    // https:// prefix は UI で固定表示しているため、ユーザーが誤って入れた場合も重複を防ぐ
+    raw = raw.replace(/^https?:\/\//i, '');
+    return 'https://' + raw;
   }
 
   /* ── CALL SERVER API ───────────────────────────────────────── */
